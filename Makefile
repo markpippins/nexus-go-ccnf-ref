@@ -1,4 +1,4 @@
-.PHONY: test conformance cross-platform fuzz oracle ci clean r2 r2-collisions r2-stress r3 r3-roundtrip r4
+.PHONY: test conformance cross-platform fuzz oracle ci clean r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5
 
 test:
 	go test ./ccnf/...
@@ -46,7 +46,11 @@ r4:
 	@echo "--- R4: Replay oracle ---"
 	go test -v -count=1 ./replay/...
 
-ci: test conformance cross-platform fuzz r2 r3 r4
+r5:
+	@echo "--- R5: Snapshot oracle ---"
+	go test -v -count=1 ./replay/snapshot/...
+
+ci: test conformance cross-platform fuzz r2 r3 r4 r5
 	@echo "--- CI gate: all OK ---"
 
 clean:
