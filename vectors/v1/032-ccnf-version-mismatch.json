@@ -1,0 +1,36 @@
+{
+  "name": "ccnf-version-mismatch",
+  "ccnf_version": 1,
+  "invariants_tested": [
+    "I11"
+  ],
+  "description": "Input carrying a ccnf_version that does not match the CCNF engine version must raise CCNF_VERSION_MISMATCH.",
+  "input": {
+    "ccnf_version": 999,
+    "actor": {
+      "type": "system",
+      "id": "version-mismatch",
+      "session_id": "vm"
+    },
+    "intent": {
+      "action": "create",
+      "target_type": "node",
+      "target_id": "node:VM"
+    },
+    "domain": "execution",
+    "event_id": "version-mismatch-001",
+    "timestamp": 1713225600,
+    "causality": {
+      "parent_event_ids": [],
+      "causal_chain_id": "chain-vm",
+      "trace_depth": 0,
+      "ordered": true
+    },
+    "payload": {
+      "data": {}
+    }
+  },
+  "expected": {
+    "error": "CCNF_VERSION_MISMATCH"
+  }
+}

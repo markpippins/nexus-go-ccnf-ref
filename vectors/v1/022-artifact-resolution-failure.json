@@ -1,0 +1,33 @@
+{
+  "name": "artifact-resolution-failure",
+  "ccnf_version": 1,
+  "invariants_tested": [
+    "I8"
+  ],
+  "description": "Symbolic references like 'current_node' or indirect pointers must raise ARTIFACT_RESOLUTION_FAILURE.",
+  "input": {
+    "actor": {
+      "type": "system",
+      "id": "artifact-fail",
+      "session_id": "fail"
+    },
+    "intent": {
+      "action": "update",
+      "target_type": "node",
+      "target_id": "current_node"
+    },
+    "domain": "execution",
+    "event_id": "artifact-fail-001",
+    "timestamp": 1713225600,
+    "causality": {
+      "parent_event_ids": [],
+      "causal_chain_id": "chain-art-fail",
+      "trace_depth": 0,
+      "ordered": true
+    },
+    "payload": {}
+  },
+  "expected": {
+    "error": "ARTIFACT_RESOLUTION_FAILURE"
+  }
+}

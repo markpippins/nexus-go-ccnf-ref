@@ -1,0 +1,31 @@
+{
+  "name": "intent-normalization-failure",
+  "ccnf_version": 1,
+  "invariants_tested": [
+    "I8"
+  ],
+  "description": "Free-text intent that cannot be mapped to controlled vocabulary must raise INTENT_NORMALIZATION_FAILURE.",
+  "input": {
+    "actor": {
+      "type": "llm",
+      "id": "llm-alpha",
+      "session_id": "freeform"
+    },
+    "intent": "please process the workflow and generate a summary report for the user",
+    "domain": "specification",
+    "event_id": "intent-fail-001",
+    "timestamp": 1713225600,
+    "causality": {
+      "parent_event_ids": [],
+      "causal_chain_id": "chain-fail",
+      "trace_depth": 0,
+      "ordered": true
+    },
+    "payload": {
+      "data": {}
+    }
+  },
+  "expected": {
+    "error": "INTENT_NORMALIZATION_FAILURE"
+  }
+}

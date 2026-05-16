@@ -1,0 +1,40 @@
+{
+  "ccnf_version": 1,
+  "description": "Same input processed by different CCNF versions must produce different entity_keys. Identity spaces are completely disjoint across versions.",
+  "expected": {
+    "assert_not_equal": true,
+    "canonical_hash": "58473cd56dd48b86f86d95d9517ad2ebb482bd5ceb21a5d95737f4fd6b5c9ed2",
+    "canonical_hash_v1": "58473cd56dd48b86f86d95d9517ad2ebb482bd5ceb21a5d95737f4fd6b5c9ed2",
+    "entity_key": "0f4bf796cbe78b40a108802615055ba735cd8961e535acda6cd495c1d938e6aa",
+    "entity_key_v1": "0f4bf796cbe78b40a108802615055ba735cd8961e535acda6cd495c1d938e6aa",
+    "entity_key_v2": "DIFFERENT_KEY_FOR_V2"
+  },
+  "input": {
+    "actor": {
+      "id": "version-isolation",
+      "session_id": "vi",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-vi",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "version-isolation-001",
+    "intent": {
+      "action": "create",
+      "target_id": "node:VI",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I11"
+  ],
+  "name": "ccnf-version-isolation"
+}

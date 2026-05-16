@@ -1,0 +1,38 @@
+{
+  "ccnf_version": 1,
+  "description": "Missing optional fields and explicit null values must both produce explicit null in canonical form.",
+  "expected": {
+    "canonical_hash": "5663202a8721958e49dd0fd41fe9d1f4bc26fd18b09728649ea0ae003e6927ea",
+    "entity_key": "73bc59c5139b1dfbba95e3354538e42b372d7124ec17e3b8e385bcac1d1c2f40"
+  },
+  "input": {
+    "actor": {
+      "id": "null-test",
+      "session_id": null,
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-null",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "null-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:null",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:null": {}
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "type-normalization-null"
+}

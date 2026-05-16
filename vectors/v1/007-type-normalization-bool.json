@@ -1,0 +1,42 @@
+{
+  "ccnf_version": 1,
+  "description": "All boolean variants must normalize to canonical lowercase true/false.",
+  "expected": {
+    "canonical_hash": "17895769f761a16a7d3421dc12c82bfc29fcb997aa37e87a1a7d12751be86af1",
+    "entity_key": "8c5a730a90991653cc6e820a13c3c6c8d57a6c393e48644ad9d7154cb123cd6c"
+  },
+  "input": {
+    "actor": {
+      "id": "bool-test",
+      "session_id": "bool",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-bool",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "bool-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:bool",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:bool": {
+          "flag_camel": true,
+          "flag_mixed": true,
+          "flag_upper": true
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "type-normalization-bool"
+}

@@ -1,0 +1,36 @@
+{
+  "ccnf_version": 1,
+  "description": "Same canonical string must produce same SHA256 hash regardless of host, language, or platform.",
+  "expected": {
+    "canonical_hash": "343bf0f300fceeae7cab78f9a616314867082f94181e280adf33831f805ad96c",
+    "entity_key": "651a5d133f0980dd8137bfc93bbfeb5b572bc05c69ce32377602c5dd5ef7c148"
+  },
+  "input": {
+    "actor": {
+      "id": "hash-test",
+      "session_id": "hash",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-hash",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "hash-det-001",
+    "intent": {
+      "action": "validate",
+      "target_id": "graph:HASH",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "hash-deterministic"
+}

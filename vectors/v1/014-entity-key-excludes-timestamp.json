@@ -1,0 +1,62 @@
+{
+  "alternate_input_same_identity": {
+    "actor": {
+      "id": "ts-identity",
+      "session_id": "epoch",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-identity2",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 1
+    },
+    "domain": "execution",
+    "event_id": "identity-ts-001",
+    "intent": {
+      "action": "execute",
+      "target_id": "node:EX-011",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225700
+  },
+  "ccnf_version": 1,
+  "description": "entity_key MUST NOT include timestamp. Two events identical except for timestamp must have the same entity_key.",
+  "expected": {
+    "canonical_hash": "6eb86a23a149299f386f33b787e20e75e96c3c723f87a50106c7293cd5139862",
+    "entity_key": "c3e94ca06990519fe11299119a5896044a9cca5bbcd5dc4da70fbe854cf3e9a7"
+  },
+  "input": {
+    "actor": {
+      "id": "ts-identity",
+      "session_id": "epoch",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-identity2",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 1
+    },
+    "domain": "execution",
+    "event_id": "identity-ts-001",
+    "intent": {
+      "action": "execute",
+      "target_id": "node:EX-011",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I3",
+    "I8",
+    "I11"
+  ],
+  "name": "entity-key-excludes-timestamp"
+}

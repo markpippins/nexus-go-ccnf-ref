@@ -1,0 +1,38 @@
+{
+  "ccnf_version": 1,
+  "description": "entity_key MUST NOT include runtime state. Two events that differ only in lifecycle_state must have the same entity_key.",
+  "expected": {
+    "canonical_hash": "c342e9b9517c9b455fb5bf40654382486e51f5806bbbbb714b0eb4f428e3e865",
+    "entity_key": "5a4356fbc7ded70166565d637b2fbc52bd7acf530d285d5b18e6eb077267b8ab"
+  },
+  "input": {
+    "actor": {
+      "id": "identity-test",
+      "session_id": "runtime",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-identity",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 1
+    },
+    "domain": "execution",
+    "event_id": "identity-runtime-001",
+    "intent": {
+      "action": "update",
+      "target_id": "node:EX-010",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I3",
+    "I8",
+    "I11"
+  ],
+  "name": "entity-key-excludes-runtime"
+}

@@ -1,0 +1,36 @@
+{
+  "ccnf_version": 1,
+  "description": "Recursive lexicographic key ordering on nested objects. Actor and causality fields must be ordered internally.",
+  "expected": {
+    "canonical_hash": "1f38784ec24cd7213d0c47672b5220ca33d34ca128739e83c81433734a48ec0c",
+    "entity_key": "d4c4c0e66aabb5fbc6812b4d8cb49e7f8cf8cbccda996f6bac5e2d053363b207"
+  },
+  "input": {
+    "actor": {
+      "id": "host-x",
+      "session_id": "nested",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-nested",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "nested-order-001",
+    "intent": {
+      "action": "create",
+      "target_id": "graph:nested",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "key-ordering-nested"
+}

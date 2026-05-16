@@ -1,0 +1,64 @@
+{
+  "ccnf_version": 1,
+  "description": "Different identity.scope produces different entity_key even if all other fields are identical.",
+  "expected": {
+    "canonical_hash_a": "651bb9fabca3060d36545f52515c5d46fd6beb4c1081775edca96348f2f62321",
+    "canonical_hash_b": "d8a612bb2b7a52235ce8c4730ae3bad40d0d76689c4412bca34786b46e914ffe",
+    "entity_key_a": "d7184e2ef12a2ea0b5b91545f1e15eeb7df4d514e7be52ea6809ce6354d8fabf",
+    "entity_key_b": "043ad0450f74dd683b65bd0bc030788856c275af375872f4a2c998eeff765018"
+  },
+  "input_a": {
+    "actor": {
+      "id": "scope-test",
+      "session_id": "scope",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-scope",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "identity-scope-001",
+    "intent": {
+      "action": "create",
+      "target_id": "graph:SCOPE",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "input_b": {
+    "actor": {
+      "id": "scope-test",
+      "session_id": "scope",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-scope",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "specification",
+    "event_id": "identity-scope-002",
+    "intent": {
+      "action": "create",
+      "target_id": "graph:SCOPE",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I3",
+    "I8",
+    "I11"
+  ],
+  "name": "entity-key-changes-on-scope"
+}

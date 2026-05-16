@@ -1,0 +1,129 @@
+{
+  "alternate_input": {
+    "actor": {
+      "id": "host-1",
+      "session_id": "sess-c",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-bbb",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "00000000-0000-0000-0000-000000000004",
+    "intent": {
+      "action": "emit",
+      "target_id": "log:001",
+      "target_type": "artifact"
+    },
+    "payload": {
+      "data": {
+        "log:001": {
+          "message": "system startup",
+          "severity": "INFO"
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "ccnf_version": 1,
+  "description": "Two semantically identical inputs with different representations (different whitespace, different key order) must produce the same CER. Validates I8 across all environments.",
+  "expected": {
+    "canonical_hash": "5266432c33e1fced723ef7f6ec5e16f44b4be33a58bc2267aa179b9ced33080c",
+    "cer": {
+      "actor": {
+        "id": "host-1",
+        "session_id": "sess-c",
+        "type": "system"
+      },
+      "artifact_refs": [
+        "log:001"
+      ],
+      "causality": {
+        "causal_chain_id": "chain-bbb",
+        "ordered": true,
+        "parent_event_ids": [],
+        "trace_depth": 0
+      },
+      "ccnf_version": 1,
+      "compression": {
+        "compression_version": 1,
+        "lossless": true,
+        "strategy": "full"
+      },
+      "domain": "system",
+      "event_id": "00000000-0000-0000-0000-000000000004",
+      "event_version": 1,
+      "identity": {
+        "alias_keys": null,
+        "collapse_key": "artifact:log:001",
+        "entity_key": "4dfd617abc9c44412f4afed49d5f99ca0634c28262b54c60f8fd80924421d1b1",
+        "scope": "system.v1",
+        "type": "event"
+      },
+      "intent": {
+        "action": "emit",
+        "target_id": "log:001",
+        "target_type": "artifact",
+        "type": "normalized_verb"
+      },
+      "payload": {
+        "data": {},
+        "type": "structured"
+      },
+      "signature": {
+        "hash": "5266432c33e1fced723ef7f6ec5e16f44b4be33a58bc2267aa179b9ced33080c",
+        "signed_by": null
+      },
+      "state_delta": [
+        {
+          "after_hash": "c8c06253d1a7c4e84a836d9ecf737eb54f354df6198a437f3ef340f7279d5615",
+          "artifact_id": "log:001",
+          "before_hash": null,
+          "patch": {
+            "message": "system startup",
+            "severity": "INFO"
+          }
+        }
+      ],
+      "system": "nexus",
+      "timestamp": 1713225600
+    },
+    "entity_key": "4dfd617abc9c44412f4afed49d5f99ca0634c28262b54c60f8fd80924421d1b1"
+  },
+  "input": {
+    "actor": {
+      "id": "host-1",
+      "session_id": "sess-c",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-bbb",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "00000000-0000-0000-0000-000000000004",
+    "intent": {
+      "action": "emit",
+      "target_id": "log:001",
+      "target_type": "artifact"
+    },
+    "payload": {
+      "data": {
+        "log:001": {
+          "message": "system startup",
+          "severity": "INFO"
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "cross-host-determinism"
+}

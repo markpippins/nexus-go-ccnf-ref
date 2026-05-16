@@ -1,0 +1,48 @@
+{
+  "ccnf_version": 1,
+  "description": "Ordered arrays (parent_event_ids) preserve their order. Unordered arrays are sorted lexicographically. Artifact refs are value-ordered.",
+  "expected": {
+    "canonical_hash": "1a17867750b8df15934c883258e2f47b004876b2114036eaae401f0d860ed38d",
+    "entity_key": "995caef4b45cfd7ef2cc431b811e1959561eec39a39b8ad469d5e10f169bbdbd"
+  },
+  "input": {
+    "actor": {
+      "id": "array-test",
+      "session_id": "array",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-array",
+      "ordered": true,
+      "parent_event_ids": [
+        "event-C",
+        "event-A",
+        "event-B"
+      ],
+      "trace_depth": 3
+    },
+    "domain": "system",
+    "event_id": "array-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:array",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:array": {
+          "tags": [
+            "z",
+            "a",
+            "m"
+          ]
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "array-ordering"
+}

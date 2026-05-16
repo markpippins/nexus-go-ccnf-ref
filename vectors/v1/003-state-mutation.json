@@ -1,0 +1,110 @@
+{
+  "ccnf_version": 1,
+  "description": "State mutation with explicit before_hash and JSON patch in state_delta.",
+  "expected": {
+    "canonical_hash": "fe7c6e2c910f0b1acd00a3d3d6f641a7d380c124a69e19e6ab3613bdd46c23e2",
+    "cer": {
+      "actor": {
+        "id": "scheduler-1",
+        "session_id": "sess-b",
+        "type": "system"
+      },
+      "artifact_refs": [
+        "node:EX-002"
+      ],
+      "causality": {
+        "causal_chain_id": "chain-aaa",
+        "ordered": true,
+        "parent_event_ids": [
+          "00000000-0000-0000-0000-000000000002"
+        ],
+        "trace_depth": 3
+      },
+      "ccnf_version": 1,
+      "compression": {
+        "compression_version": 1,
+        "lossless": true,
+        "strategy": "full"
+      },
+      "domain": "execution",
+      "event_id": "00000000-0000-0000-0000-000000000003",
+      "event_version": 1,
+      "identity": {
+        "alias_keys": null,
+        "collapse_key": "node:node:EX-002",
+        "entity_key": "afda82940fc295817660d65ace4ae6dbfa00f3bec9ec5522ed50b606e607a5fb",
+        "scope": "executiongraph.v2",
+        "type": "event"
+      },
+      "intent": {
+        "action": "update",
+        "target_id": "node:EX-002",
+        "target_type": "node",
+        "type": "normalized_verb"
+      },
+      "payload": {
+        "data": {},
+        "type": "structured"
+      },
+      "signature": {
+        "hash": "fe7c6e2c910f0b1acd00a3d3d6f641a7d380c124a69e19e6ab3613bdd46c23e2",
+        "signed_by": null
+      },
+      "state_delta": [
+        {
+          "after_hash": "b1c79cf576f8b06a5cd76b1b48a68b99b3f95e2f61eb9542ef1805dd1e985f8c",
+          "artifact_id": "node:EX-002",
+          "before_hash": null,
+          "patch": {
+            "executor_id": "executor-abc",
+            "lifecycle_state": "RUNNING",
+            "started_at": 1713225700
+          }
+        }
+      ],
+      "system": "nexus",
+      "timestamp": 1713225602
+    },
+    "entity_key": "afda82940fc295817660d65ace4ae6dbfa00f3bec9ec5522ed50b606e607a5fb"
+  },
+  "input": {
+    "actor": {
+      "id": "scheduler-1",
+      "session_id": "sess-b",
+      "type": "system"
+    },
+    "ancestor_event_id": "00000000-0000-0000-0000-000000000002",
+    "causality": {
+      "causal_chain_id": "chain-aaa",
+      "ordered": true,
+      "parent_event_ids": [
+        "00000000-0000-0000-0000-000000000002"
+      ],
+      "trace_depth": 3
+    },
+    "compression_strategy_hint": "delta",
+    "domain": "execution",
+    "event_id": "00000000-0000-0000-0000-000000000003",
+    "intent": {
+      "action": "update",
+      "target_id": "node:EX-002",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {
+        "node:EX-002": {
+          "executor_id": "executor-abc",
+          "lifecycle_state": "RUNNING",
+          "started_at": 1713225700
+        }
+      }
+    },
+    "timestamp": 1713225602
+  },
+  "invariants_tested": [
+    "I1",
+    "I2",
+    "I8"
+  ],
+  "name": "state-mutation"
+}

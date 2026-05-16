@@ -1,0 +1,65 @@
+{
+  "alternate_input": {
+    "actor": {
+      "id": "ts-test",
+      "session_id": "ts",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-ts",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "ts-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:ts",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:ts": {}
+      }
+    },
+    "timestamp": "2026-05-15T20:00:00-04:00"
+  },
+  "ccnf_version": 1,
+  "description": "ISO-8601 timestamp with timezone and offset must normalize to epoch seconds (int64, UTC).",
+  "expected": {
+    "canonical_hash": "2a6cdb69c02e674785291c889537e006fedab8123324d9a762297c8cbbab3b0d",
+    "cer_timestamp": 1713225600,
+    "entity_key": "b1942ac5a0a1c25dacc05119b1e6f03689d18b935781053e3e1167322bc7514b"
+  },
+  "input": {
+    "actor": {
+      "id": "ts-test",
+      "session_id": "ts",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-ts",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "ts-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:ts",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:ts": {}
+      }
+    },
+    "timestamp": "2026-05-16T00:00:00+00:00"
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "timestamp-normalization"
+}

@@ -1,0 +1,139 @@
+{
+  "001-simple-node-creation.json": {
+    "entity_key": "de6c1fa92fcc7205bd5c8a40f4c497c6994a5042bd2425f51a4f53a8eb7cb859",
+    "canonical_hash": "97cb25e08fd6d1f3df35f77129baf968b365f18a556c7c94fa5a40d1a5f959aa"
+  },
+  "002-simple-delta-event.json": {
+    "entity_key": "65aa7f2fce6d2eb6159b4409201b8336e2385464987c15656626eeefca8af07c",
+    "canonical_hash": "12b219889e63aa0ad85e0940d8cfe65e6853eaf598dcbbd0f2350834b06458c4"
+  },
+  "003-state-mutation.json": {
+    "entity_key": "afda82940fc295817660d65ace4ae6dbfa00f3bec9ec5522ed50b606e607a5fb",
+    "canonical_hash": "fe7c6e2c910f0b1acd00a3d3d6f641a7d380c124a69e19e6ab3613bdd46c23e2"
+  },
+  "004-cross-host-determinism.json": {
+    "entity_key": "4dfd617abc9c44412f4afed49d5f99ca0634c28262b54c60f8fd80924421d1b1",
+    "canonical_hash": "5266432c33e1fced723ef7f6ec5e16f44b4be33a58bc2267aa179b9ced33080c"
+  },
+  "005-key-ordering.json": {
+    "entity_key": "c67f58cb0cf801fc0edc34577cbfe04a490e990c81dc6f440c3b47cb5ef98d73",
+    "canonical_hash": "d933377b29199e19b575306458dceec6acf82ba88a05eea2d8770f5bb8bd3718"
+  },
+  "006-key-ordering-nested.json": {
+    "entity_key": "d4c4c0e66aabb5fbc6812b4d8cb49e7f8cf8cbccda996f6bac5e2d053363b207",
+    "canonical_hash": "1f38784ec24cd7213d0c47672b5220ca33d34ca128739e83c81433734a48ec0c"
+  },
+  "007-type-normalization-bool.json": {
+    "entity_key": "8c5a730a90991653cc6e820a13c3c6c8d57a6c393e48644ad9d7154cb123cd6c",
+    "canonical_hash": "17895769f761a16a7d3421dc12c82bfc29fcb997aa37e87a1a7d12751be86af1"
+  },
+  "008-type-normalization-null.json": {
+    "entity_key": "73bc59c5139b1dfbba95e3354538e42b372d7124ec17e3b8e385bcac1d1c2f40",
+    "canonical_hash": "5663202a8721958e49dd0fd41fe9d1f4bc26fd18b09728649ea0ae003e6927ea"
+  },
+  "009-string-normalization-nfc.json": {
+    "entity_key": "d9fd220b9b17c8f0f28baecc42d2af38cd91ee1b94af417d41f34d27d1d61d61",
+    "canonical_hash": "f1c8dd037551646d41300d3e777944dbd7adfd55a3cf2ac831bd1249abb211f0"
+  },
+  "010-string-normalization-whitespace.json": {
+    "entity_key": "579361551e7d357e88065fe25a979881133511587a223921ebb1e4895fad165c",
+    "canonical_hash": "5318601cd4bd1174d8a399ade1003d57724944e89de0ccd87f154c11c345ef6d"
+  },
+  "011-timestamp-normalization.json": {
+    "entity_key": "b1942ac5a0a1c25dacc05119b1e6f03689d18b935781053e3e1167322bc7514b",
+    "canonical_hash": "2a6cdb69c02e674785291c889537e006fedab8123324d9a762297c8cbbab3b0d"
+  },
+  "012-array-ordering.json": {
+    "entity_key": "995caef4b45cfd7ef2cc431b811e1959561eec39a39b8ad469d5e10f169bbdbd",
+    "canonical_hash": "1a17867750b8df15934c883258e2f47b004876b2114036eaae401f0d860ed38d"
+  },
+  "013-entity-key-excludes-runtime.json": {
+    "entity_key": "5a4356fbc7ded70166565d637b2fbc52bd7acf530d285d5b18e6eb077267b8ab",
+    "canonical_hash": "c342e9b9517c9b455fb5bf40654382486e51f5806bbbbb714b0eb4f428e3e865"
+  },
+  "014-entity-key-excludes-timestamp.json": {
+    "entity_key": "c3e94ca06990519fe11299119a5896044a9cca5bbcd5dc4da70fbe854cf3e9a7",
+    "canonical_hash": "6eb86a23a149299f386f33b787e20e75e96c3c723f87a50106c7293cd5139862"
+  },
+  "015-entity-key-deterministic.json": {
+    "entity_key": "884a2c0f9099d5052b549bb06ca5d3c27b82f5a3780b202cfd2306bff028af78",
+    "canonical_hash": "6d52f4839fba24b1bc1bfd13945e29fb1ca8301b53718390d5528497e3851470"
+  },
+  "016-entity-key-changes-on-scope.json": {
+    "entity_key_a": "d7184e2ef12a2ea0b5b91545f1e15eeb7df4d514e7be52ea6809ce6354d8fabf",
+    "entity_key_b": "043ad0450f74dd683b65bd0bc030788856c275af375872f4a2c998eeff765018",
+    "canonical_hash_a": "651bb9fabca3060d36545f52515c5d46fd6beb4c1081775edca96348f2f62321",
+    "canonical_hash_b": "d8a612bb2b7a52235ce8c4730ae3bad40d0d76689c4412bca34786b46e914ffe"
+  },
+  "017-collapse-key-derivation.json": {
+    "entity_key": "030cbde992684c11549bdebc6f0f0627fa96e8f335bea92926446f3b6fc5a5c2",
+    "canonical_hash": "36b4386edbe24d3d527f5093c24900b4db1fa631a247c8896270440b500b076f"
+  },
+  "018-no-identity-collision.json": {
+    "entity_key": "077d1cc4290d7c02bda455aa5b8e6377f83b1cd84743db5be125414de508aef8",
+    "canonical_hash": "dcfd6a207be40fbbf45ec86da7881a16b02f99d8173c0011e620b9bb27b964ca",
+    "entity_key_a": "7777aaaa8888bbbb99990000aaaa1111bbbb2222cccc3333dddd4444eeee5555",
+    "entity_key_b": "7481d7210944a557126b0d56d4a668acfdb3dacd90a9d68114df66bf03d3ecbc",
+    "canonical_hash_b": "e9c819b63eac93f02c426661ee2a0db298cd1b074d4ababa97e4bd13c078dfd3",
+    "assert_not_equal": true
+  },
+  "019-intent-controlled-vocabulary.json": {
+    "entity_key": "d0acfddaffff6b2b2a7e5369cc65cad943c5228ba001465f4d993e412269c5e7",
+    "canonical_hash": "ca1f31d24e04879771c32fb6e3cd55713bdd2cf7b99b0d436d79f9f213ad9c44"
+  },
+  "020-intent-normalization-failure.json": {
+    "error": "INTENT_NORMALIZATION_FAILURE"
+  },
+  "021-artifact-resolution-valid.json": {
+    "entity_key": "e35875675c2c9fb2287015b1c0a57b23720aca9afd7a3eb3ed73b21fbc42548e",
+    "canonical_hash": "e25f50820faa8e0edf488bb89c7626b7b312a7cd644d3201a6120196d60b785d"
+  },
+  "022-artifact-resolution-failure.json": {
+    "error": "ARTIFACT_RESOLUTION_FAILURE"
+  },
+  "023-delta-creation-before-hash-null.json": {
+    "entity_key": "c05dab19b7a6e194f1f7977d688cfe061107fe5ac489809e59422e28bec311ca",
+    "canonical_hash": "7da98e520ff2c7b500997bf350253d91995521146c32dfe233ec7100902af2af"
+  },
+  "024-delta-multiple-artifacts.json": {
+    "entity_key": "ebf3f8361a147149fb03c8ef474cd8cca3f09068e75bd2c2df7a44f2b0e12564",
+    "canonical_hash": "ebd055c1c76832bcaee3d3ed22764020e272a68f5d6fd4d271358d964be72955"
+  },
+  "025-delta-scope-violation.json": {
+    "entity_key": "1b044ababc3f25c2ce146fad193d35c54a7a4b773924cae66c37f3c1f578e285",
+    "canonical_hash": "7beabe084abcf58e3e5d84c00875bc11fd9e057377f6c60f51089dcf21c02e59"
+  },
+  "026-serialization-field-order.json": {
+    "entity_key": "73d470112c198f6375b8554ba9651c529949a7152d8508f45898f1e2d87ba604",
+    "canonical_hash": "f3d6b0ebd1525aa037697c8f7a72fca3b86b6675f96e104eee240e330e4bb017"
+  },
+  "027-serialization-no-optional-omission.json": {
+    "entity_key": "15494a596e6dca60f10b0bccfaa8ef001ed937be0f814a8c767ca0311bf433be",
+    "canonical_hash": "9846d7af083ebda89252d8f863d7d4aba8177fd3573f0503932da1d3e90020c2"
+  },
+  "028-serialization-no-whitespace.json": {
+    "entity_key": "b77ebe10ce0c5a75b8560f864692127b3f7f4e3fc96b22c9003dd042b1e7b0ba",
+    "canonical_hash": "a0c4e860848294996eea472850f9532b6051c32bea8785c928703cc753072f20"
+  },
+  "029-hash-deterministic.json": {
+    "entity_key": "651a5d133f0980dd8137bfc93bbfeb5b572bc05c69ce32377602c5dd5ef7c148",
+    "canonical_hash": "343bf0f300fceeae7cab78f9a616314867082f94181e280adf33831f805ad96c"
+  },
+  "030-hash-changes-on-any-field.json": {
+    "entity_key_a": "f57f963baf639d459d027a55046f6f68c250332a39695169f518a9ca3f881b4b",
+    "entity_key_b": "430618efade5243999ff68af7f0a5094c3bb9519311336a03a43c1b26a235cd3",
+    "canonical_hash_a": "ecee73fdd596d52b5cf6fca8affee7aacc27a8612819c50b52f32575731f2f87",
+    "canonical_hash_b": "feb4287c220322511ed74e0b0eb87d02ac94a5adf324555a1f36d6ef70440e73",
+    "assert_not_equal": true
+  },
+  "031-ccnf-version-isolation.json": {
+    "entity_key": "0f4bf796cbe78b40a108802615055ba735cd8961e535acda6cd495c1d938e6aa",
+    "canonical_hash": "58473cd56dd48b86f86d95d9517ad2ebb482bd5ceb21a5d95737f4fd6b5c9ed2",
+    "entity_key_v1": "0f4bf796cbe78b40a108802615055ba735cd8961e535acda6cd495c1d938e6aa",
+    "canonical_hash_v1": "58473cd56dd48b86f86d95d9517ad2ebb482bd5ceb21a5d95737f4fd6b5c9ed2",
+    "assert_not_equal": true
+  },
+  "032-ccnf-version-mismatch.json": {
+    "error": "CCNF_VERSION_MISMATCH"
+  }
+}

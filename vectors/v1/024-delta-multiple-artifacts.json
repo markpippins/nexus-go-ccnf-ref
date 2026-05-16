@@ -1,0 +1,46 @@
+{
+  "ccnf_version": 1,
+  "description": "state_delta can contain multiple artifact entries. Each must have its own artifact_id, before_hash, after_hash, patch.",
+  "expected": {
+    "canonical_hash": "ebd055c1c76832bcaee3d3ed22764020e272a68f5d6fd4d271358d964be72955",
+    "entity_key": "ebf3f8361a147149fb03c8ef474cd8cca3f09068e75bd2c2df7a44f2b0e12564"
+  },
+  "input": {
+    "actor": {
+      "id": "multi-delta",
+      "session_id": "multi",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-multi",
+      "ordered": true,
+      "parent_event_ids": [
+        "parent-001"
+      ],
+      "trace_depth": 2
+    },
+    "domain": "execution",
+    "event_id": "delta-multi-001",
+    "intent": {
+      "action": "update",
+      "target_id": "graph:MULTI",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {
+        "edge:EG-001": {
+          "active": true
+        },
+        "node:EX-030": {
+          "lifecycle_state": "RUNNING"
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I2",
+    "I8"
+  ],
+  "name": "delta-multiple-artifacts"
+}

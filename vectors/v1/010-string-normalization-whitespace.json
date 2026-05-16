@@ -1,0 +1,40 @@
+{
+  "ccnf_version": 1,
+  "description": "Leading/trailing whitespace trimmed. Internal repeated whitespace collapsed to single space.",
+  "expected": {
+    "canonical_hash": "5318601cd4bd1174d8a399ade1003d57724944e89de0ccd87f154c11c345ef6d",
+    "entity_key": "579361551e7d357e88065fe25a979881133511587a223921ebb1e4895fad165c"
+  },
+  "input": {
+    "actor": {
+      "id": "ws-test",
+      "session_id": "test",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-ws",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "ws-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:ws",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:ws": {
+          "msg": "  hello   world  "
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "string-normalization-whitespace"
+}

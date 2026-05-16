@@ -1,0 +1,44 @@
+{
+  "ccnf_version": 1,
+  "description": "state_delta with artifacts outside intent scope is handled gracefully by CCNF pipeline (scope validation is a downstream concern).",
+  "expected": {
+    "canonical_hash": "7beabe084abcf58e3e5d84c00875bc11fd9e057377f6c60f51089dcf21c02e59",
+    "entity_key": "1b044ababc3f25c2ce146fad193d35c54a7a4b773924cae66c37f3c1f578e285"
+  },
+  "input": {
+    "actor": {
+      "id": "scope-violation",
+      "session_id": "violation",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-violation",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "delta-violation-001",
+    "intent": {
+      "action": "update",
+      "target_id": "node:VIOLATION",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {
+        "node:VIOLATION": {
+          "state": "pending"
+        },
+        "unrelated:artifact": {
+          "value": 42
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I2",
+    "I8"
+  ],
+  "name": "delta-scope-violation"
+}

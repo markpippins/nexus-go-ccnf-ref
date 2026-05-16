@@ -1,0 +1,41 @@
+{
+  "ccnf_version": 1,
+  "description": "Canonical serialization must produce compact JSON with no whitespace variance, no trailing newline.",
+  "expected": {
+    "canonical_hash": "a0c4e860848294996eea472850f9532b6051c32bea8785c928703cc753072f20",
+    "entity_key": "b77ebe10ce0c5a75b8560f864692127b3f7f4e3fc96b22c9003dd042b1e7b0ba"
+  },
+  "input": {
+    "actor": {
+      "id": "ws-serial",
+      "session_id": "nos",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-compact",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "serial-compact-001",
+    "intent": {
+      "action": "create",
+      "target_id": "artifact:compact",
+      "target_type": "artifact"
+    },
+    "payload": {
+      "data": {
+        "artifact:compact": {
+          "x": 1,
+          "y": 2
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "serialization-no-whitespace"
+}

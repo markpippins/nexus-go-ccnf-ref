@@ -1,0 +1,36 @@
+{
+  "ccnf_version": 1,
+  "description": "All fields must appear in serialized output. Missing values must be explicit null, empty array, or empty object.",
+  "expected": {
+    "canonical_hash": "9846d7af083ebda89252d8f863d7d4aba8177fd3573f0503932da1d3e90020c2",
+    "entity_key": "15494a596e6dca60f10b0bccfaa8ef001ed937be0f814a8c767ca0311bf433be"
+  },
+  "input": {
+    "actor": {
+      "id": "no-omit",
+      "session_id": null,
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-omit",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "serial-no-omit-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:omit",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "serialization-no-optional-omission"
+}

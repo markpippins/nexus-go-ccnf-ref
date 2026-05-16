@@ -1,0 +1,107 @@
+{
+  "ccnf_version": 1,
+  "description": "Delta event with artifact-scoped patch. Node state transition from pending to READY.",
+  "expected": {
+    "canonical_hash": "12b219889e63aa0ad85e0940d8cfe65e6853eaf598dcbbd0f2350834b06458c4",
+    "cer": {
+      "actor": {
+        "id": "scheduler-1",
+        "session_id": "sess-a",
+        "type": "system"
+      },
+      "artifact_refs": [
+        "node:EX-001"
+      ],
+      "causality": {
+        "causal_chain_id": "chain-aaa",
+        "ordered": true,
+        "parent_event_ids": [
+          "00000000-0000-0000-0000-000000000001"
+        ],
+        "trace_depth": 2
+      },
+      "ccnf_version": 1,
+      "compression": {
+        "compression_version": 1,
+        "lossless": true,
+        "strategy": "full"
+      },
+      "domain": "execution",
+      "event_id": "00000000-0000-0000-0000-000000000002",
+      "event_version": 1,
+      "identity": {
+        "alias_keys": null,
+        "collapse_key": "node:node:EX-001",
+        "entity_key": "65aa7f2fce6d2eb6159b4409201b8336e2385464987c15656626eeefca8af07c",
+        "scope": "executiongraph.v2",
+        "type": "event"
+      },
+      "intent": {
+        "action": "update",
+        "target_id": "node:EX-001",
+        "target_type": "node",
+        "type": "normalized_verb"
+      },
+      "payload": {
+        "data": {},
+        "type": "structured"
+      },
+      "signature": {
+        "hash": "12b219889e63aa0ad85e0940d8cfe65e6853eaf598dcbbd0f2350834b06458c4",
+        "signed_by": null
+      },
+      "state_delta": [
+        {
+          "after_hash": "807a74a4fd04d06d6cc6169c1c3faf251ba46babc190ec906651540371338dde",
+          "artifact_id": "node:EX-001",
+          "before_hash": null,
+          "patch": {
+            "executor_type": "midi-engine",
+            "lifecycle_state": "READY"
+          }
+        }
+      ],
+      "system": "nexus",
+      "timestamp": 1713225601
+    },
+    "entity_key": "65aa7f2fce6d2eb6159b4409201b8336e2385464987c15656626eeefca8af07c"
+  },
+  "input": {
+    "actor": {
+      "id": "scheduler-1",
+      "session_id": "sess-a",
+      "type": "system"
+    },
+    "ancestor_event_id": "00000000-0000-0000-0000-000000000001",
+    "causality": {
+      "causal_chain_id": "chain-aaa",
+      "parent_event_ids": [
+        "00000000-0000-0000-0000-000000000001"
+      ],
+      "trace_depth": 2
+    },
+    "domain": "execution",
+    "event_id": "00000000-0000-0000-0000-000000000002",
+    "intent": {
+      "action": "update",
+      "target_id": "node:EX-001",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {
+        "node:EX-001": {
+          "executor_type": "midi-engine",
+          "lifecycle_state": "READY"
+        }
+      }
+    },
+    "timestamp": 1713225601
+  },
+  "invariants_tested": [
+    "I1",
+    "I2",
+    "I6",
+    "I8"
+  ],
+  "name": "simple-delta-event"
+}

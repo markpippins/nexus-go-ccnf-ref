@@ -1,0 +1,107 @@
+{
+  "ccnf_version": 1,
+  "description": "Full CCNF pipeline with all fields populated. Node creation in executiongraph domain.",
+  "expected": {
+    "canonical_hash": "97cb25e08fd6d1f3df35f77129baf968b365f18a556c7c94fa5a40d1a5f959aa",
+    "cer": {
+      "actor": {
+        "id": "scheduler-1",
+        "session_id": "sess-a",
+        "type": "system"
+      },
+      "artifact_refs": [
+        "node:EX-001"
+      ],
+      "causality": {
+        "causal_chain_id": "chain-aaa",
+        "ordered": true,
+        "parent_event_ids": [
+          "00000000-0000-0000-0000-000000000000"
+        ],
+        "trace_depth": 1
+      },
+      "ccnf_version": 1,
+      "compression": {
+        "compression_version": 1,
+        "lossless": true,
+        "strategy": "full"
+      },
+      "domain": "execution",
+      "event_id": "00000000-0000-0000-0000-000000000001",
+      "event_version": 1,
+      "identity": {
+        "alias_keys": null,
+        "collapse_key": "node:node:EX-001",
+        "entity_key": "de6c1fa92fcc7205bd5c8a40f4c497c6994a5042bd2425f51a4f53a8eb7cb859",
+        "scope": "executiongraph.v2",
+        "type": "event"
+      },
+      "intent": {
+        "action": "create",
+        "target_id": "node:EX-001",
+        "target_type": "node",
+        "type": "normalized_verb"
+      },
+      "payload": {
+        "data": {},
+        "type": "structured"
+      },
+      "signature": {
+        "hash": "97cb25e08fd6d1f3df35f77129baf968b365f18a556c7c94fa5a40d1a5f959aa",
+        "signed_by": null
+      },
+      "state_delta": [
+        {
+          "after_hash": "176ebbd60a04f00ba2f57906268424d397b80db7f10918588f1558f1f9d1624e",
+          "artifact_id": "node:EX-001",
+          "before_hash": null,
+          "patch": {
+            "executor_type": "midi-engine",
+            "lifecycle_state": "pending"
+          }
+        }
+      ],
+      "system": "nexus",
+      "timestamp": 1778889600
+    },
+    "entity_key": "de6c1fa92fcc7205bd5c8a40f4c497c6994a5042bd2425f51a4f53a8eb7cb859"
+  },
+  "input": {
+    "actor": {
+      "id": "scheduler-1",
+      "session_id": "sess-a",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-aaa",
+      "parent_event_ids": [
+        "00000000-0000-0000-0000-000000000000"
+      ],
+      "trace_depth": 1
+    },
+    "context": {
+      "graph_id": "graph:EX-GLOBAL"
+    },
+    "domain": "execution",
+    "event_id": "00000000-0000-0000-0000-000000000001",
+    "intent": {
+      "action": "create",
+      "target_id": "node:EX-001",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {
+        "node:EX-001": {
+          "executor_type": "midi-engine",
+          "lifecycle_state": "pending"
+        }
+      }
+    },
+    "timestamp": "2026-05-16T00:00:00Z"
+  },
+  "invariants_tested": [
+    "I1",
+    "I8"
+  ],
+  "name": "simple-node-creation"
+}

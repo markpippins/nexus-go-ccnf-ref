@@ -1,0 +1,66 @@
+{
+  "ccnf_version": 1,
+  "description": "Two semantically different entities MUST have different entity_keys even if their human-readable identifiers happen to overlap.",
+  "different_input": {
+    "actor": {
+      "id": "collision-test",
+      "session_id": "col",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-col2",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "no-collision-002",
+    "intent": {
+      "action": "create",
+      "target_id": "graph:DIFF",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "expected": {
+    "assert_not_equal": true,
+    "canonical_hash": "dcfd6a207be40fbbf45ec86da7881a16b02f99d8173c0011e620b9bb27b964ca",
+    "canonical_hash_b": "e9c819b63eac93f02c426661ee2a0db298cd1b074d4ababa97e4bd13c078dfd3",
+    "entity_key": "077d1cc4290d7c02bda455aa5b8e6377f83b1cd84743db5be125414de508aef8",
+    "entity_key_a": "7777aaaa8888bbbb99990000aaaa1111bbbb2222cccc3333dddd4444eeee5555",
+    "entity_key_b": "7481d7210944a557126b0d56d4a668acfdb3dacd90a9d68114df66bf03d3ecbc"
+  },
+  "input": {
+    "actor": {
+      "id": "collision-test",
+      "session_id": "col",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-col1",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "no-collision-001",
+    "intent": {
+      "action": "create",
+      "target_id": "node:DIFF",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I3",
+    "I8",
+    "I11"
+  ],
+  "name": "no-identity-collision"
+}

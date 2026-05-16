@@ -1,0 +1,38 @@
+{
+  "ccnf_version": 1,
+  "description": "Same canonical entity signature produces identical entity_key across hosts and representations.",
+  "expected": {
+    "canonical_hash": "6d52f4839fba24b1bc1bfd13945e29fb1ca8301b53718390d5528497e3851470",
+    "entity_key": "884a2c0f9099d5052b549bb06ca5d3c27b82f5a3780b202cfd2306bff028af78"
+  },
+  "input": {
+    "actor": {
+      "id": "det-identity",
+      "session_id": "det",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-det",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "identity-det-001",
+    "intent": {
+      "action": "validate",
+      "target_id": "graph:DET",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I3",
+    "I8",
+    "I11"
+  ],
+  "name": "entity-key-deterministic"
+}

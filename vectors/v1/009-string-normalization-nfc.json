@@ -1,0 +1,68 @@
+{
+  "alternate_input": {
+    "actor": {
+      "id": "nfc-test",
+      "session_id": "café",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-nfc",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "nfc-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:nfc",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:nfc": {
+          "label": "café"
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "ccnf_version": 1,
+  "description": "Unicode NFC normalization. Pre-composed (é as single codepoint) and decomposed (e + combining accent) forms must produce identical output.",
+  "expected": {
+    "canonical_hash": "f1c8dd037551646d41300d3e777944dbd7adfd55a3cf2ac831bd1249abb211f0",
+    "entity_key": "d9fd220b9b17c8f0f28baecc42d2af38cd91ee1b94af417d41f34d27d1d61d61"
+  },
+  "input": {
+    "actor": {
+      "id": "nfc-test",
+      "session_id": "café",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-nfc",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "system",
+    "event_id": "nfc-test-001",
+    "intent": {
+      "action": "emit",
+      "target_id": "test:nfc",
+      "target_type": "state"
+    },
+    "payload": {
+      "data": {
+        "test:nfc": {
+          "label": "café"
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "string-normalization-nfc"
+}

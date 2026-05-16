@@ -1,0 +1,63 @@
+{
+  "ccnf_version": 1,
+  "description": "Changing any single field must produce a completely different hash. No two inputs with different content may produce the same hash.",
+  "expected": {
+    "assert_not_equal": true,
+    "canonical_hash_a": "ecee73fdd596d52b5cf6fca8affee7aacc27a8612819c50b52f32575731f2f87",
+    "canonical_hash_b": "feb4287c220322511ed74e0b0eb87d02ac94a5adf324555a1f36d6ef70440e73",
+    "entity_key_a": "f57f963baf639d459d027a55046f6f68c250332a39695169f518a9ca3f881b4b",
+    "entity_key_b": "430618efade5243999ff68af7f0a5094c3bb9519311336a03a43c1b26a235cd3"
+  },
+  "input_a": {
+    "actor": {
+      "id": "hash-change",
+      "session_id": "hc",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-hc",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "hash-change-001",
+    "intent": {
+      "action": "create",
+      "target_id": "node:HC-1",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "input_b": {
+    "actor": {
+      "id": "hash-change",
+      "session_id": "hc",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-hc",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "domain": "execution",
+    "event_id": "hash-change-002",
+    "intent": {
+      "action": "create",
+      "target_id": "node:HC-2",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "hash-changes-on-any-field"
+}

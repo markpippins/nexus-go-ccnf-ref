@@ -1,0 +1,37 @@
+{
+  "ccnf_version": 1,
+  "description": "collapse_key is derived from normalized semantic identifier: lowercased, dot-separated, no punctuation noise.",
+  "expected": {
+    "canonical_hash": "36b4386edbe24d3d527f5093c24900b4db1fa631a247c8896270440b500b076f",
+    "entity_key": "030cbde992684c11549bdebc6f0f0627fa96e8f335bea92926446f3b6fc5a5c2"
+  },
+  "input": {
+    "actor": {
+      "id": "ck-test",
+      "session_id": "ck",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-ck",
+      "ordered": true,
+      "parent_event_ids": [],
+      "trace_depth": 0
+    },
+    "collapse_key_hint": "executiongraph.node.scheduler-main",
+    "domain": "execution",
+    "event_id": "collapse-key-001",
+    "intent": {
+      "action": "execute",
+      "target_id": "node:SCHEDULER",
+      "target_type": "node"
+    },
+    "payload": {
+      "data": {}
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I8"
+  ],
+  "name": "collapse-key-derivation"
+}
