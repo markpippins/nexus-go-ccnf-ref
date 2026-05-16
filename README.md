@@ -24,7 +24,7 @@ This repository exists to make correctness independent of language, runtime, or 
 
 | Authority | Source |
 |---|---|
-| Specification authority | `SERIALIZATION_CONTRACT.md` + Golden Vectors |
+| Specification authority | `spec/*.md` + `SERIALIZATION_CONTRACT.md` + Golden Vectors |
 | Behavioral authority | `ccnf-conformance` binary |
 | Correctness | No other implementation defines it |
 
@@ -56,12 +56,20 @@ Snapshot Oracle (minimal, in-memory, synchronous)
 ccnf-ref/
   SERIALIZATION_CONTRACT.md       ← immutable root commit — 9 serialization rules
   README.md                       ← this file
-  Makefile                        ← test, conformance, cross-platform, ci targets
+  Makefile                        ← R1–R6 CI targets
   go.mod                          ← module github.com/anomalyco/nexus-ccnf-ref
+
+  spec/                           ← Formal RFC-style specifications
+    CCNF_SPEC.md                  ← canonical serialization, normalization, pipeline
+    CER_SPEC.md                   ← CER schema, field semantics, structural invariants
+    REPLAY_SPEC.md                ← fold semantics, cursor model, delta merge rules
+    SNAPSHOT_SPEC.md              ← snapshot builder, validation, tri-version lock
+    VERSIONING_MODEL.md           ← version contract, migration policy
 
   vectors/
     v1/                           ← 32 golden vector files (input → expected hash)
     expected-hashes.json          ← master hash table for v1
+    r2/collisions/                ← collision atlas (87.5k inputs, 0 collisions)
 
   ccnf/
     serializer.go                 ← THE ONLY canonical serializer in the system
@@ -74,16 +82,25 @@ ccnf-ref/
     deltas.go                     ← step 6 — artifact-scoped state_delta
     serialize.go                  ← step 7 — deterministic serialization
     hash.go                       ← step 8 — SHA256 + signature
+    cer.go                        ← CER serialize/parse
+    r2.go                         ← equivalence class fuzzer (8 mutation dimensions)
     ccnf_test.go                  ← table-driven golden vector runner
-
-  cer/
-    pipeline.go                   ← write path (FULL only until Phase R3 expansion)
-    rehydrate.go                  ← read path
+    fuzz_test.go                  ← R2 structured tests
+    cer_test.go                   ← CER round-trip tests
 
   replay/
-    fold.go                       ← pure fold engine
+    types.go                      ← CEREvent, RuntimeState, EntityState
+    fold.go                       ← ApplyEvent, Fold, initialState
     cursor.go                     ← cursor operations (step, jump, time-travel)
-    snapshot.go                   ← minimal snapshot oracle
+    replay.go                     ← Replay, ReplayFromCursor, ReplayRange
+    state.go                      ← applyDelta, updateEntity, getEntity
+    r4r5_crosscheck_test.go       ← R4=R5 invariant over all golden vectors
+    snapshot/                     ← R5 snapshot oracle
+      types.go                    ← Snapshot, SnapshotContext
+      builder.go                  ← Build, BuildFromReplay
+      snapshot.go                 ← Validate, Verify, RoundTrip
+      compare.go                  ← Compare, EqualStates
+      lock.go                     ← ValidateTriVersionLock, IsValidLock
 
   conformance/
     runner.go                     ← standalone binary oracle → ccnf-conformance
