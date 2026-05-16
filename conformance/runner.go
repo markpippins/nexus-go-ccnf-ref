@@ -48,7 +48,7 @@ func runVectors() {
 
 	var files []string
 	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), ".json") {
+		if !e.IsDir() && strings.HasSuffix(e.Name(), ".json") && e.Name() != "expected-hashes.json" {
 			files = append(files, e.Name())
 		}
 	}
@@ -64,68 +64,122 @@ func runVectors() {
 			continue
 		}
 
-		var vec struct {
-			Name        string                 `json:"name"`
-			CCNFVersion int                    `json:"ccnf_version"`
-			Input       map[string]any         `json:"input"`
-			Expected    map[string]any         `json:"expected"`
-		}
-		if err := json.Unmarshal(data, &vec); err != nil {
+		var raw map[string]any
+		if err := json.Unmarshal(data, &raw); err != nil {
 			fmt.Fprintf(os.Stderr, "FAIL %s: parse error: %v\n", f, err)
 			failed++
 			continue
 		}
 
-		inputJSON, _ := json.Marshal(vec.Input)
-		cer, err := ccnf.Run(inputJSON, vec.CCNFVersion)
-
-		errStr, hasError := vec.Expected["error"].(string)
-		if hasError && errStr != "" {
-			if err == nil {
-				fmt.Fprintf(os.Stderr, "FAIL %s: expected error %q but got none\n", f, errStr)
-				failed++
-				continue
-			}
-			if strings.Contains(err.Error(), errStr) {
-				fmt.Printf("PASS %s: got expected error %q\n", f, errStr)
-				passed++
-			} else {
-				fmt.Fprintf(os.Stderr, "FAIL %s: expected error %q but got %q\n", f, errStr, err.Error())
-				failed++
-			}
-			continue
+		ccnfVersion := 1
+		if v, ok := raw["ccnf_version"].(float64); ok {
+			ccnfVersion = int(v)
 		}
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "FAIL %s: unexpected error: %v\n", f, err)
+		expected, _ := raw["expected"].(map[string]any)
+		errStr, hasError := expected["error"].(string)
+
+		inputs := []struct {
+			label string
+			data  map[string]any
+		}{}
+		if input, ok := raw["input"].(map[string]any); ok {
+			inputs = append(inputs, struct {
+				label string
+				data  map[string]any
+			}{"input", input})
+		}
+		if inputA, ok := raw["input_a"].(map[string]any); ok {
+			inputs = append(inputs, struct {
+				label string
+				data  map[string]any
+			}{"input_a", inputA})
+		}
+		if inputB, ok := raw["input_b"].(map[string]any); ok {
+			inputs = append(inputs, struct {
+				label string
+				data  map[string]any
+			}{"input_b", inputB})
+		}
+
+		if len(inputs) == 0 {
+			fmt.Fprintf(os.Stderr, "FAIL %s: no input/input_a/input_b found\n", f)
 			failed++
 			continue
 		}
 
-		if entityKey, ok := vec.Expected["entity_key"].(string); ok && entityKey != "" {
-			if cer.Identity.EntityKey != entityKey {
-				fmt.Fprintf(os.Stderr, "FAIL %s: entity_key mismatch\n  want: %s\n  got:  %s\n", f, entityKey, cer.Identity.EntityKey)
+		inputOK := true
+		for _, in := range inputs {
+			inputJSON, err := json.Marshal(in.data)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "FAIL %s (%s): marshal error: %v\n", f, in.label, err)
 				failed++
+				inputOK = false
 				continue
 			}
-		}
 
-		if canHash, ok := vec.Expected["canonical_hash"].(string); ok && canHash != "" {
-			actualHash := ccnf.ComputeHash(cer)
-			if actualHash != canHash {
-				fmt.Fprintf(os.Stderr, "FAIL %s: canonical_hash mismatch\n  want: %s\n  got:  %s\n", f, canHash, actualHash)
-				failed++
+			cer, cerr := ccnf.Run(inputJSON, ccnfVersion)
+
+			if hasError && errStr != "" {
+				if cerr == nil {
+					fmt.Fprintf(os.Stderr, "FAIL %s (%s): expected error %q but got none\n", f, in.label, errStr)
+					failed++
+					inputOK = false
+					continue
+				}
+				if !strings.Contains(cerr.Error(), errStr) {
+					fmt.Fprintf(os.Stderr, "FAIL %s (%s): expected error %q but got %q\n", f, in.label, errStr, cerr.Error())
+					failed++
+					inputOK = false
+					continue
+				}
 				continue
 			}
+
+			if cerr != nil {
+				fmt.Fprintf(os.Stderr, "FAIL %s (%s): unexpected error: %v\n", f, in.label, cerr)
+				failed++
+				inputOK = false
+				continue
+			}
+			if cer == nil {
+				fmt.Fprintf(os.Stderr, "FAIL %s (%s): expected non-nil CER\n", f, in.label)
+				failed++
+				inputOK = false
+				continue
+			}
+
+			suffix := ""
+			if in.label == "input_a" {
+				suffix = "_a"
+			} else if in.label == "input_b" {
+				suffix = "_b"
+			}
+			expectedHash(expected, cer, "entity_key"+suffix, cer.Identity.EntityKey, f, in.label, &inputOK, &failed)
+			expectedHash(expected, cer, "canonical_hash"+suffix, ccnf.ComputeHash(cer), f, in.label, &inputOK, &failed)
 		}
 
-		fmt.Printf("PASS %s\n", f)
-		passed++
+		if inputOK {
+			fmt.Printf("PASS %s\n", f)
+			passed++
+		}
 	}
 
 	fmt.Printf("\n%d passed, %d failed\n", passed, failed)
 	if failed > 0 {
 		os.Exit(1)
+	}
+}
+
+func expectedHash(expected map[string]any, cer *ccnf.CER, key, actual string, file, label string, ok *bool, failed *int) {
+	want, exists := expected[key].(string)
+	if !exists || want == "" {
+		return
+	}
+	if actual != want {
+		fmt.Fprintf(os.Stderr, "FAIL %s (%s): %s mismatch\n  want: %s\n  got:  %s\n", file, label, key, want, actual)
+		*ok = false
+		*failed++
 	}
 }
 

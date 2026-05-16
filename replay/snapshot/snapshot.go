@@ -35,7 +35,7 @@ func ValidateVersionLock(s Snapshot) error {
 
 func ValidateStateEquivalence(snapshot Snapshot, events []replay.CEREvent) error {
 	replayState := replay.Fold(events)
-	if !equalStates(replayState, snapshot.State) {
+	if !EqualStates(replayState, snapshot.State) {
 		return fmt.Errorf("%w: Fold(events) != snapshot.State", ErrStateDivergence)
 	}
 	return nil

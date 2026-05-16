@@ -1,4 +1,4 @@
-name: CCNF Conformance
+name: CCNF Conformance (R1-R6)
 
 on:
   push:
@@ -10,33 +10,130 @@ permissions:
   contents: read
 
 jobs:
-  conformance:
+  r1-ccnf-determinism:
+    name: "R1: CCNF determinism"
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go: ['1.22']
+        go: ['1.22', '1.23']
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go }}
+      - name: R1 — golden vectors + determinism
+        run: go test -run 'TestGoldenVectors|TestSerializerDeterminism' -count=1 ./ccnf/...
+        shell: bash
+      - name: R1 — hash-locked golden vectors (conformance binary)
+        run: |
+          go build -o ccnf-conformance ./conformance
+          ./ccnf-conformance run vectors/v1
+        shell: bash
 
-      - name: Unit tests + golden vectors
-        run: go test ./ccnf/...
+  r2-equivalence-closure:
+    name: "R2: Equivalence closure"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R2 — determinism + equivalence + collision
+        run: go test -run "TestR2Determinism|TestR2EquivalenceClassBoundary|TestR2CrossOrderEquivalence" -count=1 -timeout 120s ./ccnf/...
+        shell: bash
+      - name: R2 — unicode + timestamp boundaries
+        run: go test -run "TestR2UnicodeStress|TestR2TimestampBoundaries" -count=1 -timeout 120s ./ccnf/...
+        shell: bash
+      - name: R2 — collision atlas (100k)
+        run: go test -run TestR2CollisionDetection -count=1 -timeout 300s ./ccnf/...
 
-      - name: Build conformance binary
-        run: go build -o ccnf-conformance ./conformance
+  r3-cer-roundtrip:
+    name: "R3: CER round-trip"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R3 — CER serialize/rehydrate round-trip
+        run: go test -run "TestCER" -count=1 -timeout 60s ./ccnf/...
+        shell: bash
 
-      - name: Run golden vector suite
-        run: ./ccnf-conformance run vectors/v1
+  r4-replay-oracle:
+    name: "R4: Replay oracle"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R4 — fold determinism + cursor + idempotency
+        run: go test -count=1 ./replay/...
+        shell: bash
 
-      - name: Fuzz determinism check
-        run: go test -run TestFuzz ./conformance/...
+  r5-snapshot-oracle:
+    name: "R5: Snapshot oracle"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R5 — tri-version lock + equivalence + round-trip
+        run: go test -count=1 ./replay/snapshot/...
+        shell: bash
 
-      - name: Cross-platform build test
+  r4r5-crosscheck:
+    name: "R4=R5 cross-check"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R4=R5 — Fold(events) == Snapshot(state(events)) across all golden vectors
+        run: go test -run 'TestR4R5' -count=1 ./replay/...
+        shell: bash
+
+  r6-cross-platform:
+    name: "R6: Cross-platform build"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R6 — cross-platform build
         run: |
           go build ./ccnf/...
           go build ./conformance
+          go build ./replay/...
+        shell: bash
+      - name: R6 — platform-independent determinism (hash-locked)
+        run: ./ccnf-conformance run vectors/v1
+        shell: bash

@@ -19,10 +19,10 @@ func Compare(a, b Snapshot) bool {
 	if a.Timestamp != b.Timestamp {
 		return false
 	}
-	return equalStates(a.State, b.State)
+	return EqualStates(a.State, b.State)
 }
 
-func equalStates(a, b replay.RuntimeState) bool {
+func EqualStates(a, b replay.RuntimeState) bool {
 	if a.Version != b.Version {
 		return false
 	}

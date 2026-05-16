@@ -22,7 +22,7 @@ func TestSnapshotEquivalence(t *testing.T) {
 	foldState := replay.Fold(events)
 	snapshot := BuildFromReplay(events)
 
-	if !equalStates(foldState, snapshot.State) {
+	if !EqualStates(foldState, snapshot.State) {
 		t.Fatal("Fold(events) != snapshot.State")
 	}
 }
@@ -163,7 +163,7 @@ func TestSnapshotFromEvents(t *testing.T) {
 	snapshot := SnapshotFromEvents(events)
 	foldState := replay.Fold(events)
 
-	if !equalStates(foldState, snapshot.State) {
+	if !EqualStates(foldState, snapshot.State) {
 		t.Fatal("SnapshotFromEvents state != Fold(events)")
 	}
 	if err := ValidateTriVersionLock(snapshot); err != nil {
@@ -177,7 +177,7 @@ func TestBuildPreservesInputState(t *testing.T) {
 
 	snapshot := Build(state, events)
 
-	if !equalStates(state, snapshot.State) {
+	if !EqualStates(state, snapshot.State) {
 		t.Fatal("Build should preserve input state")
 	}
 
@@ -185,7 +185,7 @@ func TestBuildPreservesInputState(t *testing.T) {
 		ArtifactStates: map[string]any{"hacked": true},
 	}
 
-	if equalStates(state, snapshot.State) {
+	if EqualStates(state, snapshot.State) {
 		t.Fatal("Build must copy state, not retain reference")
 	}
 }
