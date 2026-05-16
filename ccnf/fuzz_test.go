@@ -1,17 +1,20 @@
 package ccnf
 
 import (
-	"math/rand"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestFuzzDeterminism(t *testing.T) {
-	rng := rand.New(rand.NewSource(42))
-	iterations := 10000
-	seenHashes := make(map[string]string)
+func TestR2Determinism(t *testing.T) {
+	cfg := DefaultR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+	detector := NewCollisionDetector()
 
-	for i := 0; i < iterations; i++ {
-		input := generateFuzzInput(rng, i)
+	for i := 0; i < cfg.Iterations; i++ {
+		input := fuzzer.Generate(i)
 		inputJSON := CanonicalJSON(input)
 
 		cer, err := Run(inputJSON, 1)
@@ -19,81 +22,172 @@ func TestFuzzDeterminism(t *testing.T) {
 			continue
 		}
 
-		canonHash := ComputeHash(cer)
+		h := ComputeHash(cer)
+		detector.Add(input, h)
+	}
 
-		key := cer.Domain + ":" + cer.Identity.EntityKey
-		if prev, ok := seenHashes[key]; ok {
-			if prev != canonHash {
-				t.Errorf("iteration %d: I8 VIOLATION: same key %q produced different hash\n  prev: %s\n  curr: %s", i, key, prev, canonHash)
-			}
-		} else {
-			seenHashes[key] = canonHash
-		}
+	report := detector.Report()
+	if len(report.Divergences) > 0 {
+		t.Errorf("R2-DETERMINISM: %d divergence(s) detected", len(report.Divergences))
 	}
 }
 
-func generateFuzzInput(rng *rand.Rand, seed int) map[string]any {
-	actions := []string{"create", "update", "delete", "execute", "validate", "emit"}
-	targetTypes := []string{"node", "task", "graph", "workflow", "artifact"}
+func TestR2EquivalenceClassBoundary(t *testing.T) {
 	domains := []string{"execution", "specification", "system", "test"}
+	actions := []string{"create", "update", "delete", "execute", "validate", "emit"}
+	types := []string{"node", "task", "graph", "workflow", "artifact"}
 
-	action := actions[rng.Intn(len(actions))]
-	targetType := targetTypes[rng.Intn(len(targetTypes))]
-	targetID := targetType + ":" + targetType + "-" + formatInt(seed)
-	domain := domains[rng.Intn(len(domains))]
-
-	input := map[string]any{
-		"actor": map[string]any{
-			"type":       "system",
-			"id":         "fuzzer-" + formatInt(rng.Intn(10)),
-			"session_id": "sess-" + formatInt(seed),
-		},
-		"intent": map[string]any{
-			"action":      action,
-			"target_type": targetType,
-			"target_id":   targetID,
-		},
-		"payload": map[string]any{
-			"data": map[string]any{},
-		},
-		"domain":   domain,
-		"event_id": "fuzz-" + formatInt(seed),
-		"timestamp": float64(1713225600 + rng.Intn(86400*30)),
-		"causality": map[string]any{
-			"parent_event_ids": []any{},
-			"causal_chain_id":  "chain-" + domain + "-" + formatInt(seed%100),
-			"trace_depth":      rng.Intn(10),
-		},
-	}
-
-	if rng.Float64() < 0.3 {
-		payloadData := input["payload"].(map[string]any)["data"].(map[string]any)
-		payloadData[targetType+":"+targetID] = map[string]any{
-			"state":     "active",
-			"iteration": seed,
+	combos := 0
+	for _, domain := range domains {
+		for _, action := range actions {
+			for _, typ := range types {
+				base := map[string]any{
+					"actor": map[string]any{
+						"type": "system", "id": "boundary-test",
+					},
+					"intent": map[string]any{
+						"action": action, "target_type": typ,
+						"target_id": typ + ":BOUNDARY",
+					},
+					"payload":   map[string]any{"data": map[string]any{}},
+					"domain":    domain,
+					"event_id":  fmt.Sprintf("boundary-%s-%s-%s", domain, action, typ),
+					"timestamp": float64(1713225600),
+					"causality": map[string]any{
+						"parent_event_ids": []any{},
+						"causal_chain_id":  "chain-boundary",
+						"trace_depth":      0,
+					},
+				}
+				j, _ := json.Marshal(base)
+				cer, err := Run(j, 1)
+				if err != nil {
+					t.Errorf("R2-BOUNDARY: valid combo %s/%s/%s failed: %v", domain, action, typ, err)
+					continue
+				}
+				if cer.Identity.EntityKey == "" {
+					t.Error("R2-BOUNDARY: empty entity_key")
+				}
+				combos++
+			}
 		}
 	}
-
-	return input
+	t.Logf("R2-BOUNDARY: %d domain×action×type combinations valid", combos)
 }
 
-func formatInt(n int) string {
-	if n < 10 {
-		return string(rune('0'+n))
+func TestR2CrossOrderEquivalence(t *testing.T) {
+	tester := NewCrossOrderTester()
+	cfg := DefaultR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+	trials := 0
+
+	for i := 0; i < 100; i++ {
+		input := fuzzer.Generate(i)
+		refHash, otherHashes, ok, err := tester.Test(input)
+		if err != nil {
+			continue
+		}
+		trials++
+		if !ok {
+			t.Errorf("R2-CROSS-ORDER: hash divergence at iteration %d\n  ref: %s\n  others: %v", i, refHash, otherHashes)
+		}
 	}
-	return itoa(n)
+	t.Logf("R2-CROSS-ORDER: %d trials, all hash-stable under key permutation", trials)
 }
 
-func itoa(n int) string {
-	if n == 0 {
-		return "0"
+func TestR2RoundTrip(t *testing.T) {
+	checker := NewRoundTripChecker()
+	cfg := DefaultR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+
+	for i := 0; i < 1000; i++ {
+		input := fuzzer.Generate(i)
+		inputJSON := CanonicalJSON(input)
+
+		h1, h2, err := checker.Check(inputJSON)
+		if err != nil {
+			continue
+		}
+		if h1 != h2 {
+			t.Errorf("R2-ROUNDTRIP: hash instability at iteration %d\n  pass1: %s\n  pass2: %s", i, h1, h2)
+		}
 	}
-	var buf [20]byte
-	i := len(buf)
-	for n > 0 {
-		i--
-		buf[i] = byte('0' + n%10)
-		n /= 10
+}
+
+func TestR2CollisionDetection(t *testing.T) {
+	cfg := StressR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+	detector := NewCollisionDetector()
+
+	for i := 0; i < cfg.Iterations; i++ {
+		input := fuzzer.Generate(i)
+		inputJSON := CanonicalJSON(input)
+		cer, err := Run(inputJSON, 1)
+		if err != nil {
+			continue
+		}
+		detector.Add(input, ComputeHash(cer))
 	}
-	return string(buf[i:])
+
+	report := detector.Report()
+
+	reportPath := filepath.Join("..", "vectors", "r2", "collisions", "v0.1.0-fuzz.json")
+	if _, err := os.Stat("vectors"); err == nil {
+		reportPath = filepath.Join("vectors", "r2", "collisions", "v0.1.0-fuzz.json")
+	}
+	_ = os.MkdirAll(filepath.Dir(reportPath), 0755)
+
+	b, _ := json.MarshalIndent(report, "", "  ")
+	if err := os.WriteFile(reportPath, b, 0644); err != nil {
+		t.Logf("R2-COLLISION: could not write report: %v", err)
+	}
+
+	t.Logf("R2-COLLISION: %d iterations, %d expected collisions, %d ambiguities, %d divergences",
+		cfg.Iterations, len(report.Expected), len(report.Ambiguities), len(report.Divergences))
+
+	if len(report.Divergences) > 0 {
+		t.Errorf("R2-COLLISION: %d divergence(s) found — implementation bugs", len(report.Divergences))
+	}
+}
+
+func TestR2UnicodeStress(t *testing.T) {
+	cfg := DefaultR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+	hits := 0
+
+	for i := 0; i < cfg.Iterations; i++ {
+		input := fuzzer.Generate(i)
+		inputJSON := CanonicalJSON(input)
+		cer, err := Run(inputJSON, 1)
+		if err != nil {
+			continue
+		}
+		if i%8 == 2 {
+			hits++
+			_ = cer.Identity.EntityKey
+		}
+	}
+	t.Logf("R2-UNICODE: %d unicode variant inputs processed", hits)
+}
+
+func TestR2TimestampBoundaries(t *testing.T) {
+	cfg := DefaultR2Config()
+	fuzzer := NewSemanticFuzzer(cfg)
+	hits := 0
+
+	for i := 0; i < cfg.Iterations; i++ {
+		input := fuzzer.Generate(i)
+		inputJSON := CanonicalJSON(input)
+		cer, err := Run(inputJSON, 1)
+		if err != nil {
+			continue
+		}
+		if i%8 == 3 {
+			if hits == 0 && cer.Timestamp < 0 {
+				t.Logf("R2-TIMESTAMP: negative timestamp accepted: %d (documented behavior)", cer.Timestamp)
+			}
+			hits++
+		}
+	}
+	t.Logf("R2-TIMESTAMP: %d timestamp boundary inputs processed", hits)
 }

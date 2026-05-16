@@ -1,0 +1,9 @@
+{
+  "ccnf_version": 1,
+  "seed": 42,
+  "iterations": 87500,
+  "expected": null,
+  "ambiguities": null,
+  "divergences": null,
+  "classified": {}
+}
