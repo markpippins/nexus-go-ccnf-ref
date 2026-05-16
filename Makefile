@@ -1,4 +1,4 @@
-.PHONY: test conformance cross-platform fuzz oracle ci clean r2 r2-collisions r2-stress r3 r3-roundtrip
+.PHONY: test conformance cross-platform fuzz oracle ci clean r2 r2-collisions r2-stress r3 r3-roundtrip r4
 
 test:
 	go test ./ccnf/...
@@ -42,7 +42,11 @@ r3-roundtrip:
 	@echo "--- R3: CER serialize/rehydrate round-trip ---"
 	go test -run TestCERSerializeRoundTrip -count=1 -timeout 60s ./ccnf/...
 
-ci: test conformance cross-platform fuzz r2 r3
+r4:
+	@echo "--- R4: Replay oracle ---"
+	go test -v -count=1 ./replay/...
+
+ci: test conformance cross-platform fuzz r2 r3 r4
 	@echo "--- CI gate: all OK ---"
 
 clean:
