@@ -67,7 +67,7 @@ r6:
 	  "R5:Snapshot oracle|go test -count=1 ./replay/snapshot/..." \
 	  "R4=R5:Cross-check|go test -run 'TestR4R5' -count=1 ./replay/..." \
 	  "R6:Cross-platform build|go build -o /dev/null ./conformance && go build ./ccnf/... && go build ./replay/..." \
-	  "R8:Rust verifier|cargo build --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml && cargo run --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1"; \
+	  "R8:Rust verifier|cargo build --release --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml && cargo run --release --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1"; \
 	do \
 	  total=$$((total + 1)); \
 	  label=$$(echo "$$phase" | cut -d'|' -f1); \
@@ -106,7 +106,7 @@ r8:
 	@echo "  R8: Rust verifier — independent CCNF pipeline"
 	@echo "==========================================="
 	@echo ""
-	@cargo run --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1
+	@cargo run --release --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1
 	@echo ""
 
 ci: test conformance cross-platform fuzz r2 r3 r4 r5 r8
