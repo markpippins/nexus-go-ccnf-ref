@@ -1,5 +1,5 @@
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
-        r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6
+        r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8
 
 test:
 	go test ./ccnf/...
@@ -66,7 +66,8 @@ r6:
 	  "R4:Replay oracle|go test -count=1 ./replay/..." \
 	  "R5:Snapshot oracle|go test -count=1 ./replay/snapshot/..." \
 	  "R4=R5:Cross-check|go test -run 'TestR4R5' -count=1 ./replay/..." \
-	  "R6:Cross-platform build|go build -o /dev/null ./conformance && go build ./ccnf/... && go build ./replay/..."; \
+	  "R6:Cross-platform build|go build -o /dev/null ./conformance && go build ./ccnf/... && go build ./replay/..." \
+	  "R8:Rust verifier|cargo build --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml && cargo run --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1"; \
 	do \
 	  total=$$((total + 1)); \
 	  label=$$(echo "$$phase" | cut -d'|' -f1); \
@@ -89,6 +90,7 @@ r6:
 	      *Snapshot*)       echo "  CLASS: version-lock-failure (R5)";; \
 	      *Cross-check*)    echo "  CLASS: oracle-divergence (R4 != R5)";; \
 	      *Cross-platform*) echo "  CLASS: platform-nondeterminism";; \
+	      *Rust*)           echo "  CLASS: oracle-divergence (Rust != Go)";; \
 	      *)                echo "  CLASS: unclassified";; \
 	    esac; \
 	    touch .r6_failed; \
@@ -99,7 +101,15 @@ r6:
 	if [ -f .r6_failed ]; then echo "  R6: GATE FAILED"; rm -f .r6_failed; exit 1; fi; \
 	echo "  R6: GATE PASSED"; rm -f .r6_failed
 
-ci: test conformance cross-platform fuzz r2 r3 r4 r5
+r8:
+	@echo "==========================================="
+	@echo "  R8: Rust verifier — independent CCNF pipeline"
+	@echo "==========================================="
+	@echo ""
+	@cargo run --release --manifest-path ../../../rust/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1
+	@echo ""
+
+ci: test conformance cross-platform fuzz r2 r3 r4 r5 r8
 	@echo "--- CI gate: all OK ---"
 
 clean:

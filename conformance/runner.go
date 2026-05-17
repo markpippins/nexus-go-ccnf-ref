@@ -22,6 +22,18 @@ func main() {
 	switch os.Args[1] {
 	case "run":
 		runVectors()
+	case "hash":
+		if len(os.Args) < 3 {
+			fmt.Fprintln(os.Stderr, "Usage: ccnf-conformance hash <file>")
+			os.Exit(1)
+		}
+		hashFile(os.Args[2])
+	case "canonical":
+		if len(os.Args) < 3 {
+			fmt.Fprintln(os.Stderr, "Usage: ccnf-conformance canonical <file>")
+			os.Exit(1)
+		}
+		canonicalFile(os.Args[2])
 	case "verify":
 		if len(os.Args) < 3 {
 			fmt.Fprintln(os.Stderr, "Usage: ccnf-conformance verify <file>")
@@ -181,6 +193,89 @@ func expectedHash(expected map[string]any, cer *ccnf.CER, key, actual string, fi
 		*ok = false
 		*failed++
 	}
+	_ = ccnf.ComputeHash // ensure import
+	_ = ccnf.SerializeCER
+}
+
+func canonicalFile(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
+		os.Exit(1)
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse %s: %v\n", path, err)
+		os.Exit(1)
+	}
+
+	for _, field := range []string{"input", "input_a", "input_b"} {
+		inputRaw, ok := raw[field].(map[string]any)
+		if !ok {
+			continue
+		}
+		inputJSON, err := json.Marshal(inputRaw)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to marshal input: %v\n", err)
+			os.Exit(1)
+		}
+		cer, cerr := ccnf.Run(inputJSON, 1)
+		if cerr != nil {
+			fmt.Fprintf(os.Stderr, "CCNF error: %v\n", cerr)
+			os.Exit(1)
+		}
+		if cer == nil {
+			fmt.Fprintf(os.Stderr, "nil CER\n")
+			os.Exit(1)
+		}
+		m := ccnf.BuildCERMap(cer)
+		delete(m, "signature")
+		fmt.Print(string(ccnf.CanonicalJSON(m)))
+		return
+	}
+	fmt.Fprintf(os.Stderr, "No input/input_a/input_b field in %s\n", path)
+	os.Exit(1)
+}
+
+func hashFile(path string) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read %s: %v\n", path, err)
+		os.Exit(1)
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to parse %s: %v\n", path, err)
+		os.Exit(1)
+	}
+
+	// Try input, then input_a, then input_b
+	for _, field := range []string{"input", "input_a", "input_b"} {
+		inputRaw, ok := raw[field].(map[string]any)
+		if !ok {
+			continue
+		}
+		inputJSON, err := json.Marshal(inputRaw)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to marshal input: %v\n", err)
+			os.Exit(1)
+		}
+		cer, cerr := ccnf.Run(inputJSON, 1)
+		if cerr != nil {
+			fmt.Fprintf(os.Stderr, "CCNF error: %v\n", cerr)
+			os.Exit(1)
+		}
+		if cer == nil {
+			fmt.Fprintf(os.Stderr, "nil CER\n")
+			os.Exit(1)
+		}
+		fmt.Print(ccnf.ComputeHash(cer))
+		return
+	}
+	fmt.Fprintf(os.Stderr, "No input/input_a/input_b field in %s\n", path)
+	os.Exit(1)
 }
 
 func verifyFile(path string) {
