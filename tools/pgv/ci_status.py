@@ -29,9 +29,7 @@ def main():
 
     # Get recent workflow runs across all branches
     runs = gh(
-        f"/repos/{REPO}/actions/workflows/{WORKFLOW}/runs",
-        "--paginate",
-        "-q", f"per_page={LIMIT}"
+        f"/repos/{REPO}/actions/workflows/{WORKFLOW}/runs?per_page=100"
     )
     if runs is None or "workflow_runs" not in runs:
         print(f"  Branch: {branch}")
@@ -52,34 +50,9 @@ def main():
         print(f"  Counter: 0 / 7")
         return
 
-    # For each run, check the pdtd-phase-b-verify job
-    consecutive = 0
-    total_job_runs = 0
-
-    for run in workflow_runs:
-        run_id = run["id"]
-        created = run["created_at"]
-        run_number = run.get("run_number", "?")
-
-        jobs_data = gh(f"/repos/{REPO}/actions/runs/{run_id}/jobs")
-        if jobs_data is None:
-            continue
-
-        # Find our specific job in the matrix
-        phase_b_jobs = [j for j in jobs_data.get("jobs", [])
-                        if JOB_NAME in j.get("name", "")]
-
-        for job in phase_b_jobs:
-            status = job.get("status")
-            conclusion = job.get("conclusion", "unknown")
-            os = job.get("name", "").split("(")[-1].rstrip(")") if "(" in job.get("name", "") else "?"
-            go_ver = job.get("name", "").split("(")[0].strip() if not "(" in job.get("name", "") else "?"
-
-            if status == "completed" and conclusion == "success" and len(phase_b_jobs) == 6:
-                consecutive += 1
-
-    # Calculate consecutive full-matrix passes (7 jobs = all OS × Go combos)
+    # Calculate consecutive full-matrix passes (6 jobs = 3 OS × 2 Go)
     full_passes = 0
+    MATRIX_SIZE = 6
     seen_run_ids = set()
     for run in workflow_runs:
         run_id = run["id"]
@@ -87,7 +60,7 @@ def main():
             continue
         seen_run_ids.add(run_id)
 
-        jobs_data = gh(f"/repos/{REPO}/actions/runs/{run_id}/jobs")
+        jobs_data = gh(f"/repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100")
         if jobs_data is None:
             break
 
