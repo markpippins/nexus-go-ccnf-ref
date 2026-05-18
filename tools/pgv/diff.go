@@ -2,6 +2,10 @@ package main
 
 import "sort"
 
+func DiffGraphs(base, head *Graph) IRDelta {
+	return ComputeDiff(ToIR(base), ToIR(head), base.Metadata.Hash, head.Metadata.Hash)
+}
+
 func ComputeDiff(base IR, head IR, baseHash, headHash string) IRDelta {
 	delta := IRDelta{
 		SchemaVersion:   "pgv.ir.delta.v1",
