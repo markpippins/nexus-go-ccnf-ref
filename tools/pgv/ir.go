@@ -36,11 +36,11 @@ type IR struct {
 }
 
 type IRNode struct {
-	ID        string
-	Path      string
-	Type      string
-	ParentID  string
-	Hash      string
+	ID        string `json:"id"`
+	Path      string `json:"path"`
+	Type      string `json:"type"`
+	ParentID  string `json:"parent_id"`
+	Hash      string `json:"hash"`
 }
 
 func BuildGraph(nodes []Node) *Graph {
