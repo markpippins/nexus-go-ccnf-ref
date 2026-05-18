@@ -40,36 +40,45 @@ func main() {
 
 func runDiffCLI(args []string) {
 	machineMode := false
+	humanMode := false
 	rest := args
 	if len(rest) > 0 && rest[0] == "--machine" {
 		machineMode = true
 		rest = rest[1:]
+	} else if len(rest) > 0 && rest[0] == "--human" {
+		humanMode = true
+		rest = rest[1:]
 	}
 
-	if machineMode {
+	if machineMode || humanMode {
 		g := extractGraph()
 		delta := ComputeDiffPair(g, g)
-		machineOut := cliMachineOutput{
-			CLIVersion:         "pgv.cli.diff.machine.v1",
-			IRSchemaVersion:    IrSchemaVersion,
-			DeltaSchemaVersion: "pgv.ir.delta.v1",
-			Inputs: inputs{
-				Base: g.Metadata.Hash,
-				Head: g.Metadata.Hash,
-			},
-			Result: delta,
+
+		if machineMode {
+			machineOut := cliMachineOutput{
+				CLIVersion:         "pgv.cli.diff.machine.v1",
+				IRSchemaVersion:    IrSchemaVersion,
+				DeltaSchemaVersion: "pgv.ir.delta.v1",
+				Inputs: inputs{
+					Base: g.Metadata.Hash,
+					Head: g.Metadata.Hash,
+				},
+				Result: delta,
+			}
+			data, err := json.Marshal(machineOut)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "PGV: marshal error: %v\n", err)
+				os.Exit(1)
+			}
+			fmt.Println(string(data))
+		} else {
+			fmt.Print(FormatHuman(delta))
 		}
-		data, err := json.Marshal(machineOut)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "PGV: marshal error: %v\n", err)
-			os.Exit(1)
-		}
-		fmt.Println(string(data))
 		return
 	}
 
 	if len(rest) < 2 {
-		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff [--machine] <base> <head>\n")
+		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff [--machine|--human] <base> <head>\n")
 		os.Exit(2)
 	}
 	fmt.Printf("PGV: diff subcommand (not yet implemented)\n")
