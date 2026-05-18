@@ -18,15 +18,14 @@ Triggered on push/PR to `main` or `master`.
 | R4=R5 | 3×2 | 1.22/1.23 | Fold == Snapshot cross-check |
 | R6 | 3×2 | 1.22/1.23 | Cross-platform build + golden vectors |
 | R10.3 | 3×2 | 1.22/1.23 | Rehydration: purity, isolation, registry |
-| R10.3B | 3×2 | 1.22/1.23 | Projection: no back-edge, import isolation |
-| Phase A | 3×2 | 1.22/1.23 | PGV Go + Rust dependency topology |
-| Phase B | 3×2 | 1.22/1.23 | PGV ↔ LegacyOracle parity (observational) |
+| R10.3B | 3×2 | 1.22/1.23 | Projection: no back-edge, cache isolation |
+| Phase A | 3×2 | 1.22/1.23 | PGV Go dependency topology + advisory |
+| Phase B | 3×2 | 1.22/1.23 | PGV topology enforcement (required gate) |
 
 ### Required Checks
 
-All jobs except Phase B are required. Phase B has `continue-on-error: true`
-during the observational window. On `PDTD_PHASE_B_ACTIVATE`, Phase B becomes
-required and replaces the legacy grep-based enforcement.
+All jobs are required. Phase B enforces PGV topology as the sole
+dependency authority.
 
 ### Run Status
 
@@ -34,35 +33,18 @@ required and replaces the legacy grep-based enforcement.
 make pdtp-window-status
 ```
 
-Shows: frozen surface integrity, IR hash match, local parity, CI counter.
+Shows: frozen surface integrity, IR hash match, CI counter.
 
-## PDTD Phase B Window
+## PGV Topology Enforcement
 
-### Counter
-
-The window counter tracks consecutive full-matrix (6/6) Phase B passes
-from the most recent run backward. It resets to 0 if any frozen component
-changes (extractor semantics, IR schema, validation rules, parity comparison
-logic).
-
-### Progression
-
-| State | Action |
-|-------|--------|
-| Counter < 7 | Push new commits to main/master |
-| Counter == 7 | Trigger `PDTD_PHASE_B_ACTIVATE` |
-| Frozen component changed | Counter resets automatically |
-
-### Activation
-
-At 7/7 consecutive passes:
-
-1. Create `PDTD_PHASE_B_ACTIVATE` commit that:
-   - Removes legacy grep-based enforcement commands from CI
-   - Collapses Phase B from observational to required
-   - Collapses `make r6` from 32 → 29 phases
-2. Push and verify CI is green
-3. Update this document
+PGV is the sole topology enforcement authority. Run:
+```
+make pdtp
+```
+Or check baseline integrity:
+```
+make pdtp-window-status
+```
 
 ## Branch Management
 
@@ -103,6 +85,5 @@ gh api /repos/markpippins/nexus-go-ccnf-ref/actions/jobs/<job-id>/logs
 
 1. **go.mod errors**: Run `go mod tidy -go=1.22` locally
 2. **Golden vector mismatch**: Something changed canonical output — check serializer
-3. **Phase B parity break**: PGV validator diverged from LegacyOracle — compare outputs
-4. **Rust verifier failure**: Not runnable in this repo (rust code in monorepo)
-5. **Cross-platform failure**: Usually nondeterminism in test (map iteration, timestamps)
+3. **Phase B PGV failure**: Dependency topology violated — check PGV output
+4. **Cross-platform failure**: Usually nondeterminism in test (map iteration, timestamps)

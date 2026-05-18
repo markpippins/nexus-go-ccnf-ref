@@ -65,18 +65,17 @@ IR hashing is deterministic. The validator checks P6–P10 rules.
 
 ```
 make test           # unit tests
-make r6             # full 32-phase proof gate
+make r6             # full 29-phase proof gate
 make pdtp           # PGV dependency topology
-make pdtp-phase-b-verify   # PGV ↔ LegacyOracle parity
-make pdtp-window-status    # Phase B window counter
+make pdtp-window-status    # PGV baseline integrity
 make ci             # everything CI runs
 ```
 
 ### Adding new Go code
 
 1. Create package in the appropriate directory
-2. Add `// DependsOn:` comment for Phase A advisory
-3. Run `make r6` — all 32 phases must pass
+2. Add `// DependsOn:` comment for advisory
+3. Run `make r6` — all 29 phases must pass
 4. Update the golden vector set if CCNF behavior changes
 5. Push — CI verifies across 3 OS × 2 Go versions
 
@@ -123,14 +122,11 @@ Each invariant is enforced at a specific phase in `make r6`:
 | Golden vector hash mismatch | Serializer divergence | Check `ccnf/serializer.go` — no `encoding/json` |
 | R2 collision | Spec ambiguity | Investigate, document as spec clarification |
 | PGV hash changed | Topology evolved | Update `tools/pgv/baseline.go` if intentional |
-| Phase B parity broken | PGV ≠ LegacyOracle union | Check PGV validator rules vs grep guards |
 
-## Window Management (PDTD Phase B)
+## PGV Baseline
 
-The 7-pass observational window certifies toolchain invariance:
-PGV validity is already proven; the window confirms cross-platform
-determinism and CI stability under real development pressure.
+PGV is the sole topology enforcement authority. The baseline hash in
+`tools/pgv/baseline.go` records the canonical PGV IR hash. If topology
+changes intentionally, update the baseline.
 
-- Counter resets if frozen components change (extractors, IR, validators, parity logic)
-- At 7/7: trigger `PDTD_PHASE_B_ACTIVATE` → remove legacy grep guards
-- Check counter: `make pdtp-window-status`
+Check local integrity: `make pdtp-window-status`
