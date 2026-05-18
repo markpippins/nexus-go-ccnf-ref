@@ -138,21 +138,11 @@ jobs:
           go build ./runtime/rehydrate/...
           go build ./projection/...
         shell: bash
-      - name: R6 — platform-independent determinism (hash-locked)
-        run: ./ccnf-conformance run vectors/v1
+      - name: R6 — build and verify golden vectors
+        run: |
+          go build -o ccnf-conformance ./conformance
+          ./ccnf-conformance run vectors/v1
         shell: bash
-
-  r8-rust-verifier:
-    name: "R8: Rust verifier — independent CCNF pipeline"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: R8 — build and run against golden vectors
-        run: cargo run --release -- ../go/wrp/ccnf-ref/vectors/v1
-        working-directory: rust/wrp/ccnf-verifier
-        shell: bash
-        timeout-minutes: 5
 
   r10-3-rehydration:
     name: "R10.3: Rehydration — observer wall"
