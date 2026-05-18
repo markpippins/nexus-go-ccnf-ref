@@ -1,9 +1,23 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 )
+
+type cliMachineOutput struct {
+	CLIVersion        string   `json:"cli_version"`
+	IRSchemaVersion   string   `json:"ir_schema_version"`
+	DeltaSchemaVersion string  `json:"delta_schema_version"`
+	Inputs            inputs   `json:"inputs"`
+	Result            IRDelta  `json:"result"`
+}
+
+type inputs struct {
+	Base string `json:"base"`
+	Head string `json:"head"`
+}
 
 func ComputeDiffPair(base, head *Graph) IRDelta {
 	return DiffGraphs(base, head)
@@ -25,21 +39,44 @@ func main() {
 }
 
 func runDiffCLI(args []string) {
-	if len(args) < 2 {
-		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff <base> <head>\n")
+	machineMode := false
+	rest := args
+	if len(rest) > 0 && rest[0] == "--machine" {
+		machineMode = true
+		rest = rest[1:]
+	}
+
+	if machineMode {
+		g := extractGraph()
+		delta := ComputeDiffPair(g, g)
+		machineOut := cliMachineOutput{
+			CLIVersion:         "pgv.cli.diff.machine.v1",
+			IRSchemaVersion:    IrSchemaVersion,
+			DeltaSchemaVersion: "pgv.ir.delta.v1",
+			Inputs: inputs{
+				Base: g.Metadata.Hash,
+				Head: g.Metadata.Hash,
+			},
+			Result: delta,
+		}
+		data, err := json.Marshal(machineOut)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "PGV: marshal error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(data))
+		return
+	}
+
+	if len(rest) < 2 {
+		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff [--machine] <base> <head>\n")
 		os.Exit(2)
 	}
 	fmt.Printf("PGV: diff subcommand (not yet implemented)\n")
-	fmt.Printf("PGV: base=%s head=%s\n", args[0], args[1])
+	fmt.Printf("PGV: base=%s head=%s\n", rest[0], rest[1])
 }
 
-func runValidate() {
-	cfg := &Config{
-		KernelRoots:   []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
-		Allowlist:     []string{"runtime/rehydrate/snapshot", "rust/runtime/rehydrate/snapshot"},
-		SchemaVersion: IrSchemaVersion,
-	}
-
+func extractGraph() *Graph {
 	goExt := &GoExtractor{}
 	rustExt := &RustExtractor{
 		Config: RustMappingConfig{
@@ -48,7 +85,6 @@ func runValidate() {
 			SrcPath:   "../../../rust/wrp/ccnf-verifier/src",
 		},
 	}
-	comExt := &CommentExtractor{}
 
 	extractors := []Extractor{goExt, rustExt}
 
@@ -67,15 +103,29 @@ func runValidate() {
 		os.Exit(0)
 	}
 
-	graph := BuildGraph(allNodes)
+	return BuildGraph(allNodes)
+}
 
+func runValidate() {
+	graph := extractGraph()
+	if graph == nil {
+		return
+	}
+
+	cfg := &Config{
+		KernelRoots:   []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
+		Allowlist:     []string{"runtime/rehydrate/snapshot", "rust/runtime/rehydrate/snapshot"},
+		SchemaVersion: IrSchemaVersion,
+	}
+
+	comExt := &CommentExtractor{}
 	declaredDeps, _ := comExt.ExtractDeclared()
 
 	result := ValidateWithDeclared(graph, cfg, declaredDeps)
 
 	fmt.Printf("PGV: ir_schema_version: %s\n", IrSchemaVersion)
 	fmt.Printf("PGV: IR hash: %s\n", result.Hash)
-	fmt.Printf("PGV: %d nodes, %d edges (%d extractors)\n", len(graph.Nodes), len(graph.Edges), len(extractors))
+	fmt.Printf("PGV: %d nodes, %d edges\n", len(graph.Nodes), len(graph.Edges))
 	fmt.Printf("PGV: max depth=%d, cycles=%v\n", result.Depth, result.HasCycles)
 
 	hasError := false
