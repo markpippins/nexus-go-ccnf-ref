@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const IrSchemaVersion = "v1.0.0"
+
 type Node struct {
 	ImportPath string
 	Name       string
@@ -25,7 +27,8 @@ type Graph struct {
 }
 
 type IRMetadata struct {
-	Hash string
+	SchemaVersion string
+	Hash          string
 }
 
 func BuildGraph(nodes []Node) *Graph {
@@ -64,7 +67,8 @@ func BuildGraph(nodes []Node) *Graph {
 		Nodes: sorted,
 		Edges: edges,
 		Metadata: IRMetadata{
-			Hash: computeIRHash(sorted, edges),
+			SchemaVersion: IrSchemaVersion,
+			Hash:          computeIRHash(sorted, edges),
 		},
 	}
 }

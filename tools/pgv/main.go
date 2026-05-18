@@ -7,8 +7,9 @@ import (
 
 func main() {
 	cfg := &Config{
-		KernelRoots: []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
-		Allowlist:   []string{"runtime/rehydrate/snapshot", "rust/runtime/rehydrate/snapshot"},
+		KernelRoots:   []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
+		Allowlist:     []string{"runtime/rehydrate/snapshot", "rust/runtime/rehydrate/snapshot"},
+		SchemaVersion: IrSchemaVersion,
 	}
 
 	goExt := &GoExtractor{}
@@ -44,6 +45,7 @@ func main() {
 
 	result := ValidateWithDeclared(graph, cfg, declaredDeps)
 
+	fmt.Printf("PGV: ir_schema_version: %s\n", IrSchemaVersion)
 	fmt.Printf("PGV: IR hash: %s\n", result.Hash)
 	fmt.Printf("PGV: %d nodes, %d edges (%d extractors)\n", len(graph.Nodes), len(graph.Edges), len(extractors))
 	fmt.Printf("PGV: max depth=%d, cycles=%v\n", result.Depth, result.HasCycles)
