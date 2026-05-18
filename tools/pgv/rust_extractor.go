@@ -25,10 +25,12 @@ func (e *RustExtractor) Extract() ([]Node, error) {
 	srcPath := e.Config.SrcPath
 	info, err := os.Stat(srcPath)
 	if err != nil {
-		return nil, fmt.Errorf("rust src path %s: %w", srcPath, err)
+		fmt.Fprintf(os.Stderr, "PGV: rust src %s not available, skipping: %v\n", srcPath, err)
+		return nil, nil
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("rust src path %s is not a directory", srcPath)
+		fmt.Fprintf(os.Stderr, "PGV: rust src %s not a directory, skipping\n", srcPath)
+		return nil, nil
 	}
 
 	moduleFiles := map[string]string{}
