@@ -5,6 +5,17 @@ import (
 	"os"
 )
 
+func ComputeDiffPair(base, head *Graph) IRDelta {
+	return DiffGraphs(base, head)
+}
+
+func ValidateAndDiff(g *Graph, cfg *Config) (*ValidationResult, IRDelta) {
+	declaredDeps, _ := (&CommentExtractor{}).ExtractDeclared()
+	result := ValidateWithDeclared(g, cfg, declaredDeps)
+	delta := DiffGraphs(g, g)
+	return result, delta
+}
+
 func main() {
 	cfg := &Config{
 		KernelRoots:   []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
