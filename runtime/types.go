@@ -35,12 +35,17 @@ type Timing struct {
 	DurationMs  int64 `json:"duration_ms"`
 }
 
+const CurrentRuntimeSemanticsVersion = 1
+
 type ExecutionReceipt struct {
-	RequestID   string          `json:"request_id"`
-	CCNFHash    string          `json:"ccnf_hash"`
-	CERRootHash string          `json:"cer_root_hash"`
-	Status      ExecutionStatus `json:"status"`
-	Failure     *FailureNode    `json:"failure,omitempty"`
-	Timing      Timing          `json:"timing"`
-	CCNFVersion int             `json:"ccnf_version"`
+	RequestID           string          `json:"request_id"`
+	CCNFHash            string          `json:"ccnf_hash"`
+	CERRootHash         string          `json:"cer_root_hash"`
+	TraceRootHash       string          `json:"trace_root_hash"`
+	TraceEventCount     uint64          `json:"trace_event_count"`
+	ReplayBindingHash   string          `json:"replay_binding_hash"`
+	Status              ExecutionStatus `json:"status"`
+	Failure             *FailureNode    `json:"failure,omitempty"`
+	Timing              Timing          `json:"timing"`
+	CCNFVersion         int             `json:"ccnf_version"`
 }

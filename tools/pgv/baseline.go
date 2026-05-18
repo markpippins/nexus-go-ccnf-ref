@@ -1,0 +1,3 @@
+package main
+
+const BaselineHash = "e60ec6a575f4641368f43106780f9fba12817e0b802eaf7d47e7206a300077b0"

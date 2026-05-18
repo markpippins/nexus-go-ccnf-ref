@@ -1,5 +1,5 @@
 module github.com/anomalyco/nexus-ccnf-ref
 
-go 1.26.2
+go 1.22
 
-require golang.org/x/text v0.37.0 // indirect
+require golang.org/x/text v0.17.0

@@ -1,4 +1,4 @@
-name: CCNF Conformance (R1-R6)
+name: CCNF Conformance (R1-R10.3)
 
 on:
   push:
@@ -133,6 +133,10 @@ jobs:
           go build ./ccnf/...
           go build ./conformance
           go build ./replay/...
+          go build ./runtime/...
+          go build ./runtime/replay/...
+          go build ./runtime/rehydrate/...
+          go build ./projection/...
         shell: bash
       - name: R6 — platform-independent determinism (hash-locked)
         run: ./ccnf-conformance run vectors/v1
@@ -151,3 +155,101 @@ jobs:
         working-directory: rust/wrp/ccnf-verifier
         shell: bash
         timeout-minutes: 5
+
+  r10-3-rehydration:
+    name: "R10.3: Rehydration — observer wall"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R10.3 — forbidden imports
+        run: make rehydrate-forbidden-imports
+        shell: bash
+      - name: R10.3 — registry immutability
+        run: make rehydrate-registry-immutability
+        shell: bash
+      - name: R10.3 — view purity
+        run: make rehydrate-view-purity && make rehydrate-no-pointer-receivers && make rehydrate-no-domain-words && make rehydrate-no-cross-view
+        shell: bash
+      - name: R10.3 — build isolation
+        run: make rehydrate-build-isolation
+        shell: bash
+      - name: R10.3 — rehydration tests
+        run: go test -count=1 ./runtime/rehydrate/...
+        shell: bash
+
+  r10-3b-projection:
+    name: "R10.3B: Projection layer — semantic interpretation"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: R10.3B — no back-edge
+        run: make projection-no-rehydration-backedge
+        shell: bash
+      - name: R10.3B — import isolation
+        run: make projection-no-replay-import && make projection-no-ccnf-import
+        shell: bash
+      - name: R10.3B — view style
+        run: make projection-cache-not-exposed && make projection-no-pointer-receivers
+        shell: bash
+      - name: R10.3B — build isolation
+        run: make projection-build-isolation
+        shell: bash
+      - name: R10.3B — projection tests
+        run: go test -count=1 ./projection/...
+        shell: bash
+
+  pdtp-phase-a:
+    name: "PDTD: Phase A — dependency topology hardening"
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: PDTD — PGV Go (P6–P10 dependency topology checks)
+        run: make pdtp
+        shell: bash
+      - name: PDTD — PGV Rust (asymmetry guard)
+        run: make pdtp-rust
+        shell: bash
+      - name: PDTD — No cargo metadata
+        run: make pdtp-no-cargo-metadata
+        shell: bash
+      - name: PDTD — Dependency visibility (advisory)
+        run: make dependency-visibility
+        shell: bash
+
+  pdtd-phase-b-verify:
+    name: "PDTD: Phase B verify — PGV ↔ LegacyOracle parity (observational)"
+    continue-on-error: true
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: ['1.22', '1.23']
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+      - name: PDTD — Phase B parity verification
+        run: make pdtp-phase-b-verify
+        shell: bash

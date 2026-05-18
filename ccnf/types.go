@@ -1,5 +1,13 @@
 package ccnf
 
+import "github.com/anomalyco/nexus-ccnf-ref/internal/replayseal"
+
+func (CER) IsSemantic()       {}
+func (StateDelta) IsSemantic() {}
+
+var _ replayseal.SemanticType = CER{}
+var _ replayseal.SemanticType = StateDelta{}
+
 type CER struct {
 	EventID      string         `json:"event_id"`
 	EventVersion int            `json:"event_version"`

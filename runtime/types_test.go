@@ -62,6 +62,18 @@ func TestValidateRequest_Valid(t *testing.T) {
 	}
 }
 
+func buildTestTrace(hashes ...string) *TraceBuilder {
+	tb := NewTraceBuilder()
+	for _, h := range hashes {
+		tb.Append(h)
+	}
+	return tb
+}
+
+func validCERHash() string {
+	return "aa00000000000000000000000000000000000000000000000000000000000001"
+}
+
 func TestBuildReceipt_Success(t *testing.T) {
 	req := &ExecutionRequest{
 		RequestID: "req-1",
@@ -69,7 +81,8 @@ func TestBuildReceipt_Success(t *testing.T) {
 		Version:   VersionTriple{CCNF: 1, CollapseEngine: 1, Rehydration: 1},
 	}
 	timing := Timing{StartedAt: 1000, CompletedAt: 1010, DurationMs: 10}
-	rec := BuildReceipt(req, StatusSuccess, "abc123", "abc123", nil, timing, 1)
+	trace := buildTestTrace(validCERHash())
+	rec := BuildReceipt(req, StatusSuccess, "abc123", trace, nil, timing, 1)
 
 	if rec.RequestID != "req-1" {
 		t.Fatalf("expected req-1, got %s", rec.RequestID)
@@ -86,6 +99,18 @@ func TestBuildReceipt_Success(t *testing.T) {
 	if rec.CCNFVersion != 1 {
 		t.Fatalf("expected version 1, got %d", rec.CCNFVersion)
 	}
+	if rec.TraceRootHash != rec.CERRootHash {
+		t.Fatal("TraceRootHash must equal CERRootHash in single-chain phase")
+	}
+	if rec.TraceEventCount != 1 {
+		t.Fatalf("expected TraceEventCount 1, got %d", rec.TraceEventCount)
+	}
+	if rec.ReplayBindingHash == "" {
+		t.Fatal("ReplayBindingHash must be non-empty for SUCCESS")
+	}
+	if len(rec.ReplayBindingHash) != 64 {
+		t.Fatalf("expected 64-char ReplayBindingHash, got %d", len(rec.ReplayBindingHash))
+	}
 }
 
 func TestBuildReceipt_Failure(t *testing.T) {
@@ -99,7 +124,8 @@ func TestBuildReceipt_Failure(t *testing.T) {
 		Code:    "INTENT_NORMALIZATION_FAILURE",
 		Message: "unknown intent action",
 	}
-	rec := BuildReceipt(req, StatusFailure, "", "", failure, timing, 1)
+	trace := NewTraceBuilder()
+	rec := BuildReceipt(req, StatusFailure, "", trace, failure, timing, 1)
 
 	if rec.Status != StatusFailure {
 		t.Fatalf("expected FAILURE, got %s", rec.Status)
@@ -112,6 +138,12 @@ func TestBuildReceipt_Failure(t *testing.T) {
 	}
 	if rec.Failure.Cause != nil {
 		t.Fatal("expected nil cause")
+	}
+	if rec.TraceEventCount != 0 {
+		t.Fatalf("expected TraceEventCount 0 for FAILURE, got %d", rec.TraceEventCount)
+	}
+	if rec.ReplayBindingHash != "" {
+		t.Fatal("ReplayBindingHash must be empty for FAILURE")
 	}
 }
 
@@ -126,7 +158,8 @@ func TestBuildReceipt_Partial(t *testing.T) {
 		Code:    "DOWNSTREAM_CONSISTENCY_FAILURE",
 		Message: "snapshot mismatch after fold",
 	}
-	rec := BuildReceipt(req, StatusPartial, "def456", "def456", failure, timing, 1)
+	trace := buildTestTrace(validCERHash())
+	rec := BuildReceipt(req, StatusPartial, "def456", trace, failure, timing, 1)
 
 	if rec.Status != StatusPartial {
 		t.Fatalf("expected PARTIAL, got %s", rec.Status)
@@ -137,19 +170,45 @@ func TestBuildReceipt_Partial(t *testing.T) {
 	if rec.CCNFHash != "def456" {
 		t.Fatalf("expected def456, got %s", rec.CCNFHash)
 	}
-	if rec.CERRootHash != "def456" {
-		t.Fatalf("expected def456, got %s", rec.CERRootHash)
+	if rec.TraceEventCount != 1 {
+		t.Fatalf("expected TraceEventCount 1 for PARTIAL, got %d", rec.TraceEventCount)
+	}
+	if rec.ReplayBindingHash == "" {
+		t.Fatal("ReplayBindingHash must be non-empty for PARTIAL")
+	}
+	if len(rec.ReplayBindingHash) != 64 {
+		t.Fatalf("expected 64-char ReplayBindingHash, got %d", len(rec.ReplayBindingHash))
+	}
+}
+
+func TestBuildReceipt_DeterministicReplayHash(t *testing.T) {
+	req := &ExecutionRequest{
+		RequestID: "req-det",
+		Timestamp: 4000,
+		Version:   VersionTriple{CCNF: 1, CollapseEngine: 1, Rehydration: 1},
+	}
+	timing := Timing{StartedAt: 4000, CompletedAt: 4010, DurationMs: 10}
+	trace := buildTestTrace(validCERHash())
+
+	h1 := BuildReceipt(req, StatusSuccess, "abc123", trace, nil, timing, 1).ReplayBindingHash
+	h2 := BuildReceipt(req, StatusSuccess, "abc123", trace, nil, timing, 1).ReplayBindingHash
+
+	if h1 != h2 {
+		t.Fatal("ReplayBindingHash must be deterministic")
 	}
 }
 
 func TestValidateReceipt_ValidSuccess(t *testing.T) {
 	rec := &ExecutionReceipt{
-		RequestID:   "r1",
-		CCNFHash:    "aabb",
-		CERRootHash: "aabb",
-		Status:      StatusSuccess,
-		Timing:      Timing{DurationMs: 10},
-		CCNFVersion: 1,
+		RequestID:         "r1",
+		CCNFHash:          "aabb",
+		CERRootHash:       "ccdd",
+		TraceRootHash:     "ccdd",
+		TraceEventCount:   1,
+		ReplayBindingHash: "eeff",
+		Status:            StatusSuccess,
+		Timing:            Timing{DurationMs: 10},
+		CCNFVersion:       1,
 	}
 	if err := ValidateReceipt(rec); err != nil {
 		t.Fatalf("expected nil, got %v", err)
@@ -158,10 +217,11 @@ func TestValidateReceipt_ValidSuccess(t *testing.T) {
 
 func TestValidateReceipt_ValidFailure(t *testing.T) {
 	rec := &ExecutionReceipt{
-		RequestID: "r2",
-		Status:    StatusFailure,
-		Failure:   &FailureNode{Code: "ERR", Message: "test"},
-		Timing:    Timing{DurationMs: 0},
+		RequestID:       "r2",
+		Status:          StatusFailure,
+		Failure:         &FailureNode{Code: "ERR", Message: "test"},
+		Timing:          Timing{DurationMs: 0},
+		TraceEventCount: 0,
 	}
 	if err := ValidateReceipt(rec); err != nil {
 		t.Fatalf("expected nil, got %v", err)
@@ -170,11 +230,14 @@ func TestValidateReceipt_ValidFailure(t *testing.T) {
 
 func TestValidateReceipt_ValidPartial(t *testing.T) {
 	rec := &ExecutionReceipt{
-		RequestID: "r3",
-		CCNFHash:  "ccdd",
-		Status:    StatusPartial,
-		Failure:   &FailureNode{Code: "DOWNSTREAM_CONSISTENCY_FAILURE", Message: "mismatch"},
-		Timing:    Timing{DurationMs: 50},
+		RequestID:         "r3",
+		CCNFHash:          "ccdd",
+		TraceRootHash:     "eeff",
+		TraceEventCount:   1,
+		ReplayBindingHash: "aabb",
+		Status:            StatusPartial,
+		Failure:           &FailureNode{Code: "DOWNSTREAM_CONSISTENCY_FAILURE", Message: "mismatch"},
+		Timing:            Timing{DurationMs: 50},
 	}
 	if err := ValidateReceipt(rec); err != nil {
 		t.Fatalf("expected nil, got %v", err)
@@ -238,6 +301,93 @@ func TestValidateReceipt_SuccessEmptyHash(t *testing.T) {
 	}
 	if err := ValidateReceipt(rec); err != ErrEmptyCCNFHash {
 		t.Fatalf("expected ErrEmptyCCNFHash, got %v", err)
+	}
+}
+
+func TestValidateReceipt_SuccessEmptyTraceRootHash(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:       "r8",
+		Status:          StatusSuccess,
+		CCNFHash:        "aabb",
+		TraceRootHash:   "",
+		TraceEventCount: 1,
+		Timing:          Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrEmptyTraceRootHash {
+		t.Fatalf("expected ErrEmptyTraceRootHash, got %v", err)
+	}
+}
+
+func TestValidateReceipt_SuccessZeroTraceCount(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:       "r9",
+		Status:          StatusSuccess,
+		CCNFHash:        "aabb",
+		TraceRootHash:   "ccdd",
+		TraceEventCount: 0,
+		Timing:          Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrZeroTraceEventCount {
+		t.Fatalf("expected ErrZeroTraceEventCount, got %v", err)
+	}
+}
+
+func TestValidateReceipt_FailureNonZeroTraceCount(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:       "r10",
+		Status:          StatusFailure,
+		Failure:         &FailureNode{Code: "ERR", Message: "test"},
+		TraceEventCount: 1,
+		Timing:          Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrNonZeroTraceEventCount {
+		t.Fatalf("expected ErrNonZeroTraceEventCount, got %v", err)
+	}
+}
+
+func TestValidateReceipt_PartialEmptyTraceRootHash(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:       "r11",
+		Status:          StatusPartial,
+		CCNFHash:        "aabb",
+		TraceRootHash:   "",
+		TraceEventCount: 1,
+		Failure:         &FailureNode{Code: "DOWNSTREAM_CONSISTENCY_FAILURE", Message: "mismatch"},
+		Timing:          Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrEmptyTraceRootHash {
+		t.Fatalf("expected ErrEmptyTraceRootHash, got %v", err)
+	}
+}
+
+func TestValidateReceipt_SuccessEmptyReplayHash(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:       "r12",
+		Status:          StatusSuccess,
+		CCNFHash:        "aabb",
+		TraceRootHash:   "ccdd",
+		TraceEventCount: 1,
+		ReplayBindingHash: "",
+		Timing:          Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrEmptyReplayBindingHash {
+		t.Fatalf("expected ErrEmptyReplayBindingHash, got %v", err)
+	}
+}
+
+func TestValidateReceipt_PartialEmptyReplayHash(t *testing.T) {
+	rec := &ExecutionReceipt{
+		RequestID:         "r13",
+		Status:            StatusPartial,
+		CCNFHash:          "aabb",
+		TraceRootHash:     "ccdd",
+		TraceEventCount:   1,
+		ReplayBindingHash: "",
+		Failure:           &FailureNode{Code: "DOWNSTREAM_CONSISTENCY_FAILURE", Message: "mismatch"},
+		Timing:            Timing{DurationMs: 10},
+	}
+	if err := ValidateReceipt(rec); err != ErrEmptyReplayBindingHash {
+		t.Fatalf("expected ErrEmptyReplayBindingHash, got %v", err)
 	}
 }
 
