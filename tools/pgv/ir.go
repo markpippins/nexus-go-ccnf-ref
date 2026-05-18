@@ -31,6 +31,18 @@ type IRMetadata struct {
 	Hash          string
 }
 
+type IR struct {
+	Nodes map[string]IRNode
+}
+
+type IRNode struct {
+	ID        string
+	Path      string
+	Type      string
+	ParentID  string
+	Hash      string
+}
+
 func BuildGraph(nodes []Node) *Graph {
 	sorted := make([]Node, len(nodes))
 	copy(sorted, nodes)
