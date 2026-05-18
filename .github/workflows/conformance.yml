@@ -232,3 +232,20 @@ jobs:
       - name: PDTD — Phase B parity verification
         run: make pdtp-phase-b-verify
         shell: bash
+
+  adr001-protocol:
+    name: "ADR-001: IR identity governance"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check ADR-001 compliance
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          bash scripts/check-adr001.sh "$BASE_SHA"
+        shell: bash
