@@ -17,6 +17,23 @@ func ValidateAndDiff(g *Graph, cfg *Config) (*ValidationResult, IRDelta) {
 }
 
 func main() {
+	if len(os.Args) > 1 && os.Args[1] == "diff" {
+		runDiffCLI(os.Args[2:])
+		return
+	}
+	runValidate()
+}
+
+func runDiffCLI(args []string) {
+	if len(args) < 2 {
+		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff <base> <head>\n")
+		os.Exit(2)
+	}
+	fmt.Printf("PGV: diff subcommand (not yet implemented)\n")
+	fmt.Printf("PGV: base=%s head=%s\n", args[0], args[1])
+}
+
+func runValidate() {
 	cfg := &Config{
 		KernelRoots:   []string{"runtime/", "ccnf/", "replay/", "rust/runtime/", "rust/ccnf/"},
 		Allowlist:     []string{"runtime/rehydrate/snapshot", "rust/runtime/rehydrate/snapshot"},
