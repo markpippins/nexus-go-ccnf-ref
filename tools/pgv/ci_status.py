@@ -27,24 +27,25 @@ def main():
         capture_output=True, text=True
     ).stdout.strip()
 
-    # Get recent workflow runs
+    # Get recent workflow runs across all branches
     runs = gh(
         f"/repos/{REPO}/actions/workflows/{WORKFLOW}/runs",
         "--paginate",
-        "-q", f"per_page={LIMIT}&branch={branch}"
+        "-q", f"per_page={LIMIT}"
     )
     if runs is None or "workflow_runs" not in runs:
         print(f"  Branch: {branch}")
-        print(f"  No conformance.yml runs found on branch '{branch}'")
-        print(f"  (workflow triggers on push/PR to 'main' only)")
+        print(f"  No conformance.yml runs found")
         print()
         print(f"  Counter: 0 / 7")
-        print(f"  (no CI data — first push to main will start the counter)")
         return
 
     workflow_runs = runs["workflow_runs"]
+    # Only count runs on main/master branches
+    workflow_runs = [r for r in workflow_runs
+                     if r.get("head_branch") in ("main", "master")]
     print(f"  Branch: {branch}")
-    print(f"  Workflow runs found: {len(workflow_runs)}")
+    print(f"  Runs on main/master: {len(workflow_runs)}")
 
     if not workflow_runs:
         print()
@@ -74,10 +75,8 @@ def main():
             os = job.get("name", "").split("(")[-1].rstrip(")") if "(" in job.get("name", "") else "?"
             go_ver = job.get("name", "").split("(")[0].strip() if not "(" in job.get("name", "") else "?"
 
-            if status == "completed":
-                total_job_runs += 1
-                if conclusion == "success" and len(phase_b_jobs) == 7:
-                    consecutive += 1
+            if status == "completed" and conclusion == "success" and len(phase_b_jobs) == 6:
+                consecutive += 1
 
     # Calculate consecutive full-matrix passes (7 jobs = all OS × Go combos)
     full_passes = 0
@@ -95,7 +94,8 @@ def main():
         phase_b_jobs = [j for j in jobs_data.get("jobs", [])
                         if JOB_NAME in j.get("name", "")]
 
-        if len(phase_b_jobs) == 7 and all(
+        MATRIX_SIZE = 6  # 3 OS × 2 Go versions
+        if len(phase_b_jobs) == MATRIX_SIZE and all(
             j.get("conclusion") == "success" and j.get("status") == "completed"
             for j in phase_b_jobs
         ):
@@ -104,7 +104,7 @@ def main():
             break
 
     print()
-    print(f"  Full matrix passes (7/7): {full_passes}")
+    print(f"  Full matrix passes ({MATRIX_SIZE}/{MATRIX_SIZE}): {full_passes}")
     print(f"  Counter: {full_passes} / 7")
 
     if full_passes >= 7:

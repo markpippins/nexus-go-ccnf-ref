@@ -2,9 +2,9 @@ name: CCNF Conformance (R1-R10.3)
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 permissions:
   contents: read
