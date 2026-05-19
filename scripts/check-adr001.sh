@@ -62,7 +62,7 @@ if echo "$CHANGED" | grep -E "golden_ir\.json|golden_identity\.json" >/dev/null;
 fi
 
 # Gate 2: Structural change requires ADR declaration
-if ! echo "$COMMITS" | grep -qE "ADR-001|ADR-002"; then
+if ! echo "$COMMITS" | grep -qE "ADR-001|ADR-002|ADR-003"; then
   echo "❌ GOVERNANCE violation: protected surface modified without governance declaration."
   echo "   Reference ADR-001 or ADR-002 in at least one commit message in this branch."
   echo "   See: docs/adr/ADR-001-ir-identity-governance.md"
