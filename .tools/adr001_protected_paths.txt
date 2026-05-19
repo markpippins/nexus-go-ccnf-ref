@@ -12,3 +12,4 @@ tools/pgv/testdata/golden_ir.json
 tools/pgv/pgv_test.go
 runtime/identity/
 .tools/golden_identity.json
+.tools/transition_ledger.json

@@ -21,11 +21,14 @@ Triggered on push/PR to `main` or `master`.
 | R10.3B | 3×2 | 1.22/1.23 | Projection: no back-edge, cache isolation |
 | Phase A | 3×2 | 1.22/1.23 | PGV Go dependency topology + advisory |
 | Phase B | 3×2 | 1.22/1.23 | PGV topology enforcement (required gate) |
+| ADR-001 | 1 | — | IR identity governance (protected surface + phase lock) |
+| R10.4 | 1 | 1.22 | Identity registry guardrails + tests |
+| R10.5 | 1 | — | CEGL-A closed-world verification |
 
 ### Required Checks
 
 All jobs are required. Phase B enforces PGV topology as the sole
-dependency authority.
+dependency authority. R10.5 enforces CEGL-A governance state legality.
 
 ### Run Status
 

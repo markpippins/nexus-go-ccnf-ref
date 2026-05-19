@@ -65,7 +65,7 @@ IR hashing is deterministic. The validator checks P6–P10 rules.
 
 ```
 make test           # unit tests
-make r6             # full 29-phase proof gate
+make r6             # full 31-phase proof gate
 make pdtp           # PGV dependency topology
 make pdtp-window-status    # PGV baseline integrity
 make ci             # everything CI runs
@@ -75,7 +75,7 @@ make ci             # everything CI runs
 
 1. Create package in the appropriate directory
 2. Add `// DependsOn:` comment for advisory
-3. Run `make r6` — all 29 phases must pass
+3. Run `make r6` — all 31 phases must pass
 4. Update the golden vector set if CCNF behavior changes
 5. Push — CI verifies across 3 OS × 2 Go versions
 
@@ -113,6 +113,9 @@ Each invariant is enforced at a specific phase in `make r6`:
 | P9   | No observed backflow (replay → CCNF, rehydrate → replay) | PDTD |
 | P10a | Forbidden import paths (architectural law) | PDTD |
 | P10b | Allowlist enforcement (projection-only constraints) | PDTD |
+| CEGL-A1 | Governance state is uniquely determined (Axiom A3) | R10.5 |
+| CEGL-A2 | Transitions exist only in T (transition ledger) | R10.5 |
+| CEGL-A3 | pgv.phase is compiled_only, never edited directly | Gate 4A |
 
 ## Common Failure Modes
 
@@ -130,3 +133,24 @@ PGV is the sole topology enforcement authority. The baseline hash in
 changes intentionally, update the baseline.
 
 Check local integrity: `make pdtp-window-status`
+
+## CEGL-A Governance
+
+CEGL-A is the closed-world verifier. It determines the canonical governance
+state and validates that all state transitions are legal per the transition
+ledger (`.tools/transition_ledger.json`).
+
+- Run locally: `make check-cegla`
+- Run in CI: R10.5 job
+- pgv.phase is a compiled artifact — never edit it directly
+
+### State Reference
+
+| State | Description |
+|-------|-------------|
+| PHASE_2_FROZEN | IR identity frozen. No structural changes to protected surface. |
+| REBASELINE_PENDING | Golden rebaseline proposed. |
+| REBASELINE_ACCEPTED | Rebaseline approved by governance. |
+| PHASE_3_DUAL | Dual implementation active. |
+| PHASE_4_SWITCH | Switchover in progress. |
+| INVALID | A3 violation — canonical state cannot be determined uniquely. |

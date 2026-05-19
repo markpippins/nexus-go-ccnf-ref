@@ -3,7 +3,7 @@ SHELL = /bin/bash
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
         r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8 \
         r9 r9-rust r10 r10-rust replay-seal replay-import-check replay-build-isolation \
-        r10.3 r10.3-rust r10.3b r10.4 \
+        r10.3 r10.3-rust r10.3b r10.4 r10.5 \
         rehydrate-forbidden-imports rehydrate-registry-immutability rehydrate-no-pointer-receivers \
         rehydrate-no-domain-words rehydrate-view-purity rehydrate-no-cross-view rehydrate-build-isolation \
         rust-rehydrate-no-mut \
@@ -12,7 +12,8 @@ SHELL = /bin/bash
         rust-projection-no-rehydration-backedge rust-projection-no-mut \
         pdtp pdtp-all pdtp-phase-b-verify pdtp-window-status dependency-visibility \
         check-identity-boundary check-identity-write-once identity-replay \
-        identity-dual-run check-identity-determinism
+        identity-dual-run check-identity-determinism \
+        check-cegla
 
 test:
 	go test ./ccnf/...
@@ -101,7 +102,8 @@ r6:
 	  "R10.3B:Rust projection|cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml && cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- projection 2>&1 && make rust-projection-no-rehydration-backedge && make rust-projection-no-mut" \
 	  "PDTD:PGV Go|make pdtp" \
 	  "PDTD:Dependency visibility|make dependency-visibility" \
-	  "R10.4:Identity registry|make r10.4"; \
+	  "R10.4:Identity registry|make r10.4" \
+	  "R10.5:CEGL-A verification|make r10.5"; \
 	do \
 	  total=$$((total + 1)); \
 	  label=$$(echo "$$phase" | cut -d'|' -f1); \
@@ -139,6 +141,7 @@ r6:
 	      *PGV*)            echo "  CLASS: pdtp-violation (PDTD)";; \
 	  *Dependency*)     echo "  CLASS: pdtp-warn (P10 advisory)";; \
 	      *Identity*)       echo "  CLASS: identity-leak (R10.4)";; \
+	      *CEGL*)           echo "  CLASS: cegla-violation (R10.5)";; \
 	      *)                echo "  CLASS: unclassified";; \
 	    esac; \
 	    touch .r6_failed; \
@@ -505,7 +508,18 @@ r10.4:
 	@$(MAKE) identity-replay
 	@$(MAKE) identity-dual-run
 	@$(MAKE) check-identity-determinism
-	go test -count=1 ./runtime/identity/...
+	go test -count=1 ./runtime/identity/
+
+r10.5:
+	@echo "================================================"
+	@echo "  R10.5: CEGL-A Closed-World Verification"
+	@echo "================================================"
+	@echo ""
+	bash scripts/check-cegla.sh
+
+check-cegla:
+	@echo "--- CEGL-A verification ---"
+	bash scripts/check-cegla.sh
 
 clean:
 	rm -rf ./bin
