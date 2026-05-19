@@ -3,8 +3,12 @@
 #
 # Changes to these files require governance declaration
 # in at least one commit within the branch range.
+#
+# ADR-002 extends the protected surface to include the identity registry.
 
 tools/pgv/graph_to_ir.go
 tools/pgv/ir.go
 tools/pgv/testdata/golden_ir.json
 tools/pgv/pgv_test.go
+runtime/identity/
+.tools/golden_identity.json

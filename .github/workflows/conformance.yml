@@ -249,3 +249,15 @@ jobs:
           fi
           bash scripts/check-adr001.sh "$BASE_SHA"
         shell: bash
+
+  r10-4-identity-registry:
+    name: "R10.4: Identity registry (ADR-002)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: R10.4 — identity guardrails + tests
+        run: make r10.4
+        shell: bash

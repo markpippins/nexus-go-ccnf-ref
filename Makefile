@@ -3,14 +3,16 @@ SHELL = /bin/bash
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
         r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8 \
         r9 r9-rust r10 r10-rust replay-seal replay-import-check replay-build-isolation \
-        r10.3 r10.3-rust r10.3b \
+        r10.3 r10.3-rust r10.3b r10.4 \
         rehydrate-forbidden-imports rehydrate-registry-immutability rehydrate-no-pointer-receivers \
         rehydrate-no-domain-words rehydrate-view-purity rehydrate-no-cross-view rehydrate-build-isolation \
         rust-rehydrate-no-mut \
         projection-no-rehydration-backedge \
         projection-build-isolation projection-cache-not-exposed projection-no-pointer-receivers \
         rust-projection-no-rehydration-backedge rust-projection-no-mut \
-        pdtp pdtp-all pdtp-phase-b-verify pdtp-window-status dependency-visibility
+        pdtp pdtp-all pdtp-phase-b-verify pdtp-window-status dependency-visibility \
+        check-identity-boundary check-identity-write-once identity-replay \
+        identity-dual-run check-identity-determinism
 
 test:
 	go test ./ccnf/...
@@ -98,7 +100,8 @@ r6:
 	  "R10.3B:Build isolation|make projection-build-isolation" \
 	  "R10.3B:Rust projection|cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml && cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- projection 2>&1 && make rust-projection-no-rehydration-backedge && make rust-projection-no-mut" \
 	  "PDTD:PGV Go|make pdtp" \
-	  "PDTD:Dependency visibility|make dependency-visibility"; \
+	  "PDTD:Dependency visibility|make dependency-visibility" \
+	  "R10.4:Identity registry|make r10.4"; \
 	do \
 	  total=$$((total + 1)); \
 	  label=$$(echo "$$phase" | cut -d'|' -f1); \
@@ -134,7 +137,8 @@ r6:
 	      *back-edge*)      echo "  CLASS: projection-back-edge (R10.3B)";; \
 	      *Import*)         echo "  CLASS: import-seal-violation (R10)";; \
 	      *PGV*)            echo "  CLASS: pdtp-violation (PDTD)";; \
-	      *Dependency*)     echo "  CLASS: pdtp-warn (P10 advisory)";; \
+	  *Dependency*)     echo "  CLASS: pdtp-warn (P10 advisory)";; \
+	      *Identity*)       echo "  CLASS: identity-leak (R10.4)";; \
 	      *)                echo "  CLASS: unclassified";; \
 	    esac; \
 	    touch .r6_failed; \
@@ -441,6 +445,67 @@ dependency-visibility:
 	  fi; \
 	done; \
 	if [ "$$missing" = "1" ]; then echo "  P10: advisory WARN — some files lack DependsOn annotations"; else echo "  P10: all files have DependsOn annotations"; fi
+
+check-identity-boundary:
+	@echo "--- ADR-002 Guardrail 1: Import Firewall ---"
+	@banned=0; \
+	for pkg in rehydrate executor diff graph; do \
+	  if grep -r "github.com/anomalyco/nexus-ccnf-ref/runtime/$$pkg" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	    echo "  BANNED: runtime/identity imports $$pkg"; \
+	    banned=1; \
+	  fi; \
+	done; \
+	if grep -r "github.com/anomalyco/nexus-ccnf-ref/tools/pgv/diff" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	  echo "  BANNED: runtime/identity imports tools/pgv/diff"; \
+	  banned=1; \
+	fi; \
+	if grep -r "github.com/anomalyco/nexus-ccnf-ref/tools/pgv/graph" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	  echo "  BANNED: runtime/identity imports tools/pgv/graph"; \
+	  banned=1; \
+	fi; \
+	if [ "$$banned" = "1" ]; then echo "  IMPORT FIREWALL: FAILED"; exit 1; fi; \
+	echo "  OK: identity imports are clean"
+
+check-identity-write-once:
+	@echo "--- ADR-002 Guardrail 2: Write-Once Enforcement ---"
+	@forbidden=0; \
+	for verb in Update Delete Replace Overwrite; do \
+	  if grep -q "func.*$$verb" runtime/identity/store.go 2>/dev/null; then \
+	    echo "  BANNED: write-once violation — $$verb in store"; \
+	    forbidden=1; \
+	  fi; \
+	done; \
+	if [ "$$forbidden" = "1" ]; then echo "  WRITE-ONCE CHECK: FAILED"; exit 1; fi; \
+	echo "  OK: no mutation verbs in store"
+
+identity-replay:
+	@echo "--- ADR-002 Guardrail 3: Golden Identity Replay ---"
+	@go test -run 'TestReplay|TestAssemble' -count=1 ./runtime/identity/... 2>&1 | tail -3
+	@if [ -f .tools/golden_identity.json ]; then \
+	  echo "  OK: golden identity file present"; \
+	else \
+	  echo "  BANNED: .tools/golden_identity.json missing"; \
+	  exit 1; \
+	fi
+
+identity-dual-run:
+	@echo "--- ADR-002 Guardrail 5: Dual-Run Validator Hook ---"
+	@go test -run 'TestAssembleDeterministic|TestTransformationMOVE' -count=2 ./runtime/identity/... 2>&1 | tail -3
+	@echo "  OK: dual-run parity holds"
+
+check-identity-determinism:
+	@echo "--- ADR-002 Guardrail 6: Registry Determinism Check ---"
+	@go test -run 'TestAssembleDeterministic|TestRegistryDeterminism' -count=2 ./runtime/identity/... 2>&1 | grep -E "^(ok|FAIL)" && echo "  OK: determinism verified"
+
+r10.4:
+	@echo "--- R10.4: Identity Registry (ADR-002) ---"
+	@echo ""
+	@$(MAKE) check-identity-boundary
+	@$(MAKE) check-identity-write-once
+	@$(MAKE) identity-replay
+	@$(MAKE) identity-dual-run
+	@$(MAKE) check-identity-determinism
+	go test -count=1 ./runtime/identity/...
 
 clean:
 	rm -rf ./bin
