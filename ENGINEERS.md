@@ -109,7 +109,7 @@ Each invariant is enforced at a specific phase in `make r6`:
 | R6   | Cross-platform build | R6 |
 | P6   | Max dependency depth ≤ 0 (projection isolation) | PDTD |
 | P7   | No projection-to-projection edges | PDTD |
-| P8   | No cycles in dependency graph | PDTD |
+| P8   | No cycles in dependency graph | PDTD ~/
 | P9   | No observed backflow (replay → CCNF, rehydrate → replay) | PDTD |
 | P10a | Forbidden import paths (architectural law) | PDTD |
 | P10b | Allowlist enforcement (projection-only constraints) | PDTD |
