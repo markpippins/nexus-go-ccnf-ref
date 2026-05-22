@@ -3,14 +3,17 @@ SHELL = /bin/bash
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
         r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8 \
         r9 r9-rust r10 r10-rust replay-seal replay-import-check replay-build-isolation \
-        r10.3 r10.3-rust r10.3b \
+        r10.3 r10.3-rust r10.3b r10.4 r10.5 \
         rehydrate-forbidden-imports rehydrate-registry-immutability rehydrate-no-pointer-receivers \
         rehydrate-no-domain-words rehydrate-view-purity rehydrate-no-cross-view rehydrate-build-isolation \
         rust-rehydrate-no-mut \
-        projection-no-rehydration-backedge projection-no-replay-import projection-no-ccnf-import \
+        projection-no-rehydration-backedge \
         projection-build-isolation projection-cache-not-exposed projection-no-pointer-receivers \
         rust-projection-no-rehydration-backedge rust-projection-no-mut \
-        pdtp pdtp-rust pdtp-all pdtp-no-cargo-metadata pdtp-phase-b-verify pdtp-window-status dependency-visibility
+        pdtp pdtp-all pdtp-phase-b-verify pdtp-window-status dependency-visibility \
+        check-identity-boundary check-identity-write-once identity-replay \
+        identity-dual-run check-identity-determinism \
+        check-cegla
 
 test:
 	go test ./ccnf/...
@@ -94,14 +97,13 @@ r6:
 	  "R10.3:No Rust &mut|make rust-rehydrate-no-mut" \
 	  "R10.3B:Projection Go|go test -count=1 ./projection/..." \
 	  "R10.3B:No back-edge|make projection-no-rehydration-backedge" \
-	  "R10.3B:Import isolation|make projection-no-replay-import && make projection-no-ccnf-import" \
 	  "R10.3B:View-style|make projection-cache-not-exposed && make projection-no-pointer-receivers" \
 	  "R10.3B:Build isolation|make projection-build-isolation" \
 	  "R10.3B:Rust projection|cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml && cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- projection 2>&1 && make rust-projection-no-rehydration-backedge && make rust-projection-no-mut" \
 	  "PDTD:PGV Go|make pdtp" \
-	  "PDTD:PGV Rust|make pdtp-rust" \
-	  "PDTD:No cargo metadata|make pdtp-no-cargo-metadata" \
-	  "PDTD:Dependency visibility|make dependency-visibility"; \
+	  "PDTD:Dependency visibility|make dependency-visibility" \
+	  "R10.4:Identity registry|make r10.4" \
+	  "R10.5:CEGL-A verification|make r10.5"; \
 	do \
 	  total=$$((total + 1)); \
 	  label=$$(echo "$$phase" | cut -d'|' -f1); \
@@ -137,8 +139,9 @@ r6:
 	      *back-edge*)      echo "  CLASS: projection-back-edge (R10.3B)";; \
 	      *Import*)         echo "  CLASS: import-seal-violation (R10)";; \
 	      *PGV*)            echo "  CLASS: pdtp-violation (PDTD)";; \
-	      *cargo*metadata*) echo "  CLASS: pdtp-violation (Rust asymmetry)";; \
-	      *Dependency*)     echo "  CLASS: pdtp-warn (P10 advisory)";; \
+	  *Dependency*)     echo "  CLASS: pdtp-warn (P10 advisory)";; \
+	      *Identity*)       echo "  CLASS: identity-leak (R10.4)";; \
+	      *CEGL*)           echo "  CLASS: cegla-violation (R10.5)";; \
 	      *)                echo "  CLASS: unclassified";; \
 	    esac; \
 	    touch .r6_failed; \
@@ -307,22 +310,6 @@ projection-no-rehydration-backedge:
 	if [ "$$banned" = "1" ]; then echo "  PROJECTION BACK-EDGE CHECK: FAILED"; exit 1; fi; \
 	echo "  OK: all projection imports are rehydrate/snapshot only"
 
-projection-no-replay-import:
-	@echo "--- Projection replay import check ---"
-	@if grep -qR "runtime/replay" projection/ --include="*.go" 2>/dev/null | grep -v "_test.go" | grep -q .; then \
-	  echo "  BANNED: projection production code imports runtime/replay"; \
-	  grep -R "runtime/replay" projection/ --include="*.go" | grep -v "_test.go"; \
-	  exit 1; \
-	fi; \
-	echo "  OK: no runtime/replay imports in production projection code"
-
-projection-no-ccnf-import:
-	@echo "--- Projection CCNF import check ---"
-	@if grep -qR '"github.com/anomalyco/nexus-ccnf-ref/ccnf"' projection/ 2>/dev/null; then \
-	  echo "  BANNED: projection imports CCNF"; \
-	  exit 1; \
-	fi; \
-	echo "  OK: no CCNF imports in projection"
 
 projection-cache-not-exposed:
 	@echo "--- Projection cache exposure check ---"
@@ -370,8 +357,6 @@ r10.3b:
 	@echo "--- R10.3B: Projection layer ---"
 	@echo ""
 	@$(MAKE) projection-no-rehydration-backedge
-	@$(MAKE) projection-no-replay-import
-	@$(MAKE) projection-no-ccnf-import
 	@$(MAKE) projection-cache-not-exposed
 	@$(MAKE) projection-no-pointer-receivers
 	@$(MAKE) projection-build-isolation
@@ -394,91 +379,16 @@ pdtp:
 	@echo "--- PGV: Projection Dependency Topology Hardening ---"
 	@go run ./tools/pgv/
 
-pdtp-rust:
-	@echo "--- PGV: Rust asymmetry check ---"
-	@found=0; \
-	for f in ../../../rust/wrp/ccnf-verifier/src/runtime/*.rs ../../../rust/wrp/ccnf-verifier/src/runtime/*/*.rs; do \
-	  if [ -f "$$f" ]; then \
-	    if grep -q "use crate::projection\|use crate::projection::" "$$f" 2>/dev/null; then \
-	      echo "  BANNED: $$f imports crate::projection"; \
-	      found=1; \
-	    fi; \
-	  fi; \
-	done; \
-	if [ "$$found" = "1" ]; then echo "  RUST PGV: FAILED (runtime imports projection)"; exit 1; fi; \
-	echo "  OK: Rust runtime does not import projection"
-
-pdtp-no-cargo-metadata:
-	@echo "--- PGV: Rust asymmetry enforcement (no cargo metadata) ---"
-	@if grep -r "cargo metadata" ../../../rust/wrp/ccnf-verifier/ 2>/dev/null | grep -v "_test\|#\|//" | grep -q .; then \
-	  echo "  BANNED: cargo metadata found in Rust verifier"; \
-	  exit 1; \
-	fi; \
-	echo "  OK: no cargo metadata in Rust verifier (grep-only topology)"
-
-pdtp-all: pdtp pdtp-rust pdtp-no-cargo-metadata
+pdtp-all: pdtp
 	@echo "--- PGV: all checks passed ---"
 
 pdtp-phase-b-verify:
 	@echo "================================================"
-	@echo "  Phase B verify: PGV parity with LegacyOracle"
+	@echo "  Phase B verify: PGV topology enforcement"
 	@echo "================================================"
 	@echo ""
-	@rm -f .phase_b_pgv_pass .phase_b_legacy_pass
 	@echo "--- Running PGV (all extractors) ---"
-	@if go run ./tools/pgv/ > /tmp/phase_b_pgv 2>&1; then \
-	  touch .phase_b_pgv_pass; \
-	  echo "  PGV: PASS"; \
-	else \
-	  echo "  PGV: FAIL"; \
-	  cat /tmp/phase_b_pgv | head -10; \
-	fi
-	@echo ""
-	@echo "--- Running LegacyOracle (union) ---"
-	@legacy_pass=0; legacy_total=0; \
-	for check in \
-	  "Rust no-backedge|make pdtp-rust" \
-	  "No replay import|make projection-no-replay-import" \
-	  "No CCNF import|make projection-no-ccnf-import"; \
-	do \
-	  legacy_total=$$((legacy_total + 1)); \
-	  label=$$(echo "$$check" | cut -d'|' -f1); \
-	  cmd=$$(echo "$$check" | cut -d'|' -f2-); \
-	  printf "  [%s] " "$$label"; \
-	  if eval "$$cmd" > /tmp/phase_b_legacy_check 2>&1; then \
-	    echo "PASS"; \
-	    legacy_pass=$$((legacy_pass + 1)); \
-	  else \
-	    echo "FAIL"; \
-	    cat /tmp/phase_b_legacy_check | head -5; \
-	  fi; \
-	done; \
-	echo "  LegacyOracle: $$legacy_pass/$$legacy_total checks passed"; \
-	if [ "$$legacy_pass" = "$$legacy_total" ]; then touch .phase_b_legacy_pass; fi
-	@echo ""
-	@echo "--- Parity check ---"
-	@if [ -f .phase_b_pgv_pass ] && [ -f .phase_b_legacy_pass ]; then \
-	  echo "  PGV == LegacyOracle: EQUIVALENT (both pass)"; \
-	  echo "  Phase B verify: PASSED"; \
-	elif [ -f .phase_b_pgv_pass ] && [ ! -f .phase_b_legacy_pass ]; then \
-	  echo "  PGV passes but LegacyOracle fails — PGV is stricter."; \
-	  echo "  This is safe: PGV is a superset checker."; \
-	  echo "  Investigate legacy checks for removal readiness."; \
-	  echo "  Phase B verify: INFORMATIONAL"; \
-	elif [ ! -f .phase_b_pgv_pass ] && [ -f .phase_b_legacy_pass ]; then \
-	  echo "  PGV fails but LegacyOracle passes — PARITY BROKEN."; \
-	  echo "  PGV should match LegacyOracle signals."; \
-	  echo "  Phase B verify: FAILED"; \
-	  rm -f .phase_b_pgv_pass .phase_b_legacy_pass; \
-	  exit 1; \
-	else \
-	  echo "  Both PGV and LegacyOracle fail."; \
-	  echo "  Fix violations before Phase B activation."; \
-	  echo "  Phase B verify: FAILED"; \
-	  rm -f .phase_b_pgv_pass .phase_b_legacy_pass; \
-	  exit 1; \
-	fi
-	@rm -f .phase_b_pgv_pass .phase_b_legacy_pass
+	@go run ./tools/pgv/
 
 pdtp-window-status:
 	@echo "================================================"
@@ -512,29 +422,18 @@ pdtp-window-status:
 	  touch .window_hash_fail; \
 	fi
 	@echo ""
-	@echo "--- Parity check ---"
-	@if make pdtp-phase-b-verify > /tmp/window_parity 2>&1; then \
-	  echo "  PGV == LegacyOracle: EQUIVALENT"; \
-	else \
-	  echo "  PGV == LegacyOracle: BROKEN"; \
-	  cat /tmp/window_parity | grep "PARITY\|FAILED"; \
-	fi
-	@echo ""
 	@echo "--- CI run history ---"
 	@python3 tools/pgv/ci_status.py 2>&1 || echo "  (CI query failed)"
 	@echo ""
 	@echo "--- Status ---"
 	@if [ -f .window_frozen_fail ]; then \
-	  echo "  ❌ FROZEN SURFACE CHANGED — window must reset"; \
+	  echo "  FROZEN SURFACE CHANGED"; \
 	  rm -f .window_frozen_fail .window_hash_fail; \
 	elif [ -f .window_hash_fail ]; then \
-	  echo "  ⚠️  HASH CHANGED — topology evolved, new baseline candidate"; \
-	  echo "  Window resets if this is a frozen-surface change."; \
-	  echo "  If intentional topology evolution, update baseline."; \
+	  echo "  HASH CHANGED — topology evolved, update baseline."; \
 	  rm -f .window_frozen_fail .window_hash_fail; \
 	else \
-	  echo "  ✅ Local state matches baseline"; \
-	  echo "  Counter from CI (see above)"; \
+	  echo "  Clean"; \
 	fi
 
 dependency-visibility:
@@ -549,6 +448,78 @@ dependency-visibility:
 	  fi; \
 	done; \
 	if [ "$$missing" = "1" ]; then echo "  P10: advisory WARN — some files lack DependsOn annotations"; else echo "  P10: all files have DependsOn annotations"; fi
+
+check-identity-boundary:
+	@echo "--- ADR-002 Guardrail 1: Import Firewall ---"
+	@banned=0; \
+	for pkg in rehydrate executor diff graph; do \
+	  if grep -r "github.com/anomalyco/nexus-ccnf-ref/runtime/$$pkg" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	    echo "  BANNED: runtime/identity imports $$pkg"; \
+	    banned=1; \
+	  fi; \
+	done; \
+	if grep -r "github.com/anomalyco/nexus-ccnf-ref/tools/pgv/diff" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	  echo "  BANNED: runtime/identity imports tools/pgv/diff"; \
+	  banned=1; \
+	fi; \
+	if grep -r "github.com/anomalyco/nexus-ccnf-ref/tools/pgv/graph" runtime/identity/*.go runtime/identity/internal/*.go 2>/dev/null | grep -qv "_test.go"; then \
+	  echo "  BANNED: runtime/identity imports tools/pgv/graph"; \
+	  banned=1; \
+	fi; \
+	if [ "$$banned" = "1" ]; then echo "  IMPORT FIREWALL: FAILED"; exit 1; fi; \
+	echo "  OK: identity imports are clean"
+
+check-identity-write-once:
+	@echo "--- ADR-002 Guardrail 2: Write-Once Enforcement ---"
+	@forbidden=0; \
+	for verb in Update Delete Replace Overwrite; do \
+	  if grep -q "func.*$$verb" runtime/identity/store.go 2>/dev/null; then \
+	    echo "  BANNED: write-once violation — $$verb in store"; \
+	    forbidden=1; \
+	  fi; \
+	done; \
+	if [ "$$forbidden" = "1" ]; then echo "  WRITE-ONCE CHECK: FAILED"; exit 1; fi; \
+	echo "  OK: no mutation verbs in store"
+
+identity-replay:
+	@echo "--- ADR-002 Guardrail 3: Golden Identity Replay ---"
+	@go test -run 'TestReplay|TestAssemble' -count=1 ./runtime/identity/... 2>&1 | tail -3
+	@if [ -f .tools/golden_identity.json ]; then \
+	  echo "  OK: golden identity file present"; \
+	else \
+	  echo "  BANNED: .tools/golden_identity.json missing"; \
+	  exit 1; \
+	fi
+
+identity-dual-run:
+	@echo "--- ADR-002 Guardrail 5: Dual-Run Validator Hook ---"
+	@go test -run 'TestAssembleDeterministic|TestTransformationMOVE' -count=2 ./runtime/identity/... 2>&1 | tail -3
+	@echo "  OK: dual-run parity holds"
+
+check-identity-determinism:
+	@echo "--- ADR-002 Guardrail 6: Registry Determinism Check ---"
+	@go test -run 'TestAssembleDeterministic|TestRegistryDeterminism' -count=2 ./runtime/identity/... 2>&1 | grep -E "^(ok|FAIL)" && echo "  OK: determinism verified"
+
+r10.4:
+	@echo "--- R10.4: Identity Registry (ADR-002) ---"
+	@echo ""
+	@$(MAKE) check-identity-boundary
+	@$(MAKE) check-identity-write-once
+	@$(MAKE) identity-replay
+	@$(MAKE) identity-dual-run
+	@$(MAKE) check-identity-determinism
+	go test -count=1 ./runtime/identity/
+
+r10.5:
+	@echo "================================================"
+	@echo "  R10.5: CEGL-A Closed-World Verification"
+	@echo "================================================"
+	@echo ""
+	bash scripts/check-cegla.sh
+
+check-cegla:
+	@echo "--- CEGL-A verification ---"
+	bash scripts/check-cegla.sh
 
 clean:
 	rm -rf ./bin

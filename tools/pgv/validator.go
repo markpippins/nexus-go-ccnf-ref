@@ -27,8 +27,9 @@ type Violation struct {
 }
 
 type Config struct {
-	KernelRoots []string
-	Allowlist   []string
+	KernelRoots   []string
+	Allowlist     []string
+	SchemaVersion string
 }
 
 type ValidationResult struct {
@@ -338,6 +339,16 @@ func Validate(g *Graph, cfg *Config) *ValidationResult {
 }
 
 func ValidateWithDeclared(g *Graph, cfg *Config, declaredDeps []DeclaredDeps) *ValidationResult {
+	if cfg.SchemaVersion != "" && cfg.SchemaVersion != IrSchemaVersion {
+		return &ValidationResult{
+			Violations: []Violation{{
+				Code:     "SCHEMA_MISMATCH",
+				Message:  "IR schema version mismatch: config=" + cfg.SchemaVersion + " expected=" + IrSchemaVersion,
+				Severity: SeverityError,
+			}},
+		}
+	}
+
 	projNodes := projectionNodes(g.Nodes)
 	projEdges := projectionEdges(g.Edges, projNodes)
 	bfEdges := backflowEdges(g.Edges, cfg.KernelRoots, projNodes)

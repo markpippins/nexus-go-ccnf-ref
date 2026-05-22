@@ -1,0 +1,25 @@
+{
+  "Nodes": {
+    "auth/model": {
+      "id": "auth/model",
+      "path": "auth/model",
+      "type": "module",
+      "parent_id": "auth",
+      "hash": "0b95cc5b8795dd3018230143651186aaca0b126278ac4bbe9c8b3a8c61507331"
+    },
+    "auth/service": {
+      "id": "auth/service",
+      "path": "auth/service",
+      "type": "module",
+      "parent_id": "auth",
+      "hash": "441024fa373892d785fe7be2c39807e7821a16d3d07b06da57676bd5dbe12668"
+    },
+    "shared/log": {
+      "id": "shared/log",
+      "path": "shared/log",
+      "type": "module",
+      "parent_id": "shared",
+      "hash": "b1a4958ab8d4f8496ef3dae241b17ac12275f4575dd8238b1bd2d28a395e6332"
+    }
+  }
+}

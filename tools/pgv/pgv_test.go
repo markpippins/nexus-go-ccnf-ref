@@ -1,0 +1,83 @@
+package main
+
+import (
+	"encoding/json"
+	"os"
+	"reflect"
+	"sort"
+	"testing"
+)
+
+var goldenNodes = []Node{
+	{ImportPath: "auth/service", Name: "service", DirectDeps: []string{"auth/model", "shared/log"}},
+	{ImportPath: "auth/model", Name: "model", DirectDeps: []string{}},
+	{ImportPath: "shared/log", Name: "log", DirectDeps: []string{}},
+}
+
+func goldenGraphFixture() *Graph {
+	return BuildGraph(goldenNodes)
+}
+
+func loadGoldenIRSnapshot(t *testing.T) IR {
+	t.Helper()
+	data, err := os.ReadFile("testdata/golden_ir.json")
+	if err != nil {
+		t.Fatalf("failed to read golden snapshot: %v", err)
+	}
+	var ir IR
+	if err := json.Unmarshal(data, &ir); err != nil {
+		t.Fatalf("failed to unmarshal golden snapshot: %v", err)
+	}
+	return ir
+}
+
+func flattenAndSort(nodes map[string]IRNode) []IRNode {
+	keys := make([]string, 0, len(nodes))
+	for k := range nodes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	sorted := make([]IRNode, len(keys))
+	for i, k := range keys {
+		sorted[i] = nodes[k]
+	}
+	return sorted
+}
+
+func updateGolden(t *testing.T) {
+	t.Helper()
+	g := goldenGraphFixture()
+	got := ToIR(g)
+	data, err := json.MarshalIndent(got, "", "  ")
+	if err != nil {
+		t.Fatalf("failed to marshal golden IR: %v", err)
+	}
+	if err := os.WriteFile("testdata/golden_ir.json", data, 0644); err != nil {
+		t.Fatalf("failed to write golden snapshot: %v", err)
+	}
+}
+
+func TestGoldenGraphToIR(t *testing.T) {
+	if os.Getenv("PGV_UPDATE_GOLDEN") == "1" {
+		updateGolden(t)
+		return
+	}
+
+	g := goldenGraphFixture()
+	got := ToIR(g)
+	want := loadGoldenIRSnapshot(t)
+
+	gotList := flattenAndSort(got.Nodes)
+	wantList := flattenAndSort(want.Nodes)
+
+	if !reflect.DeepEqual(gotList, wantList) {
+		t.Fatalf("IR drift detected:\nGOT:  %+v\nWANT: %+v", gotList, wantList)
+	}
+
+	for id := range want.Nodes {
+		if got.Nodes[id].Hash != want.Nodes[id].Hash {
+			t.Fatalf("hash instability for node %q: got %s, want %s",
+				id, got.Nodes[id].Hash, want.Nodes[id].Hash)
+		}
+	}
+}

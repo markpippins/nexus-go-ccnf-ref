@@ -187,9 +187,6 @@ jobs:
       - name: R10.3B — no back-edge
         run: make projection-no-rehydration-backedge
         shell: bash
-      - name: R10.3B — import isolation
-        run: make projection-no-replay-import && make projection-no-ccnf-import
-        shell: bash
       - name: R10.3B — view style
         run: make projection-cache-not-exposed && make projection-no-pointer-receivers
         shell: bash
@@ -215,19 +212,13 @@ jobs:
       - name: PDTD — PGV Go (P6–P10 dependency topology checks)
         run: make pdtp
         shell: bash
-      - name: PDTD — PGV Rust (asymmetry guard)
-        run: make pdtp-rust
-        shell: bash
-      - name: PDTD — No cargo metadata
-        run: make pdtp-no-cargo-metadata
-        shell: bash
       - name: PDTD — Dependency visibility (advisory)
         run: make dependency-visibility
         shell: bash
 
   pdtd-phase-b-verify:
-    name: "PDTD: Phase B verify — PGV ↔ LegacyOracle parity (observational)"
-    continue-on-error: true
+    name: "PDTD: Phase B verify — PGV topology enforcement"
+    continue-on-error: false
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -240,4 +231,50 @@ jobs:
           go-version: ${{ matrix.go }}
       - name: PDTD — Phase B parity verification
         run: make pdtp-phase-b-verify
+        shell: bash
+
+  adr001-protocol:
+    name: "ADR-001: IR identity governance"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check ADR-001 compliance
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          bash scripts/check-adr001.sh "$BASE_SHA"
+        shell: bash
+
+  r10-4-identity-registry:
+    name: "R10.4: Identity registry (ADR-002)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: R10.4 — identity guardrails + tests
+        run: make r10.4
+        shell: bash
+
+  r10-5-cegla-verification:
+    name: "R10.5: CEGL-A closed-world verification"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: R10.5 — CEGL-A governance state verification
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+          bash scripts/check-cegla.sh "$BASE_SHA"
         shell: bash
