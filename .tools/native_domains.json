@@ -1,0 +1,6 @@
+{
+  "schema_version": "cir-sdm.v1",
+  "native_domains": {
+    "go/wrp/ccnf-ref/": ["CCNF", "CER", "CEGL", "ADR"]
+  }
+}
