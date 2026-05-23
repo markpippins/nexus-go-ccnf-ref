@@ -1,0 +1,156 @@
+{
+  "schema_version": "pgv.state_machine.v1",
+  "name": "pgv.phase_lifecycle",
+  "initial_state": "PHASE_2_FROZEN",
+  "states": {
+    "PHASE_2_FROZEN": {
+      "description": "IR identity frozen. Structural changes to protected surface prohibited without governance protocol.",
+      "is_canonical": true
+    },
+    "REBASELINE_PENDING": {
+      "description": "Golden rebaseline proposed. Transition in progress.",
+      "is_canonical": true
+    },
+    "REBASELINE_ACCEPTED": {
+      "description": "Rebaseline approved. Governance has authorized structural evolution.",
+      "is_canonical": true
+    },
+    "PHASE_3_DUAL": {
+      "description": "Dual implementation active. Old and new implementations coexist.",
+      "is_canonical": true
+    },
+    "PHASE_4_SWITCH": {
+      "description": "Switchover in progress. New implementation replaces old.",
+      "is_canonical": true
+    },
+    "INVALID": {
+      "description": "Canonical state cannot be determined. Axiom A3 violation: |C(O)| != 1.",
+      "is_canonical": false
+    }
+  },
+  "transitions": [
+    {
+      "id": "t1_rebaseline_request",
+      "from": "PHASE_2_FROZEN",
+      "to": "REBASELINE_PENDING",
+      "entropy_cost": "low",
+      "guard": "change_targets_protected_surface",
+      "description": "PR modifies protected surface with REBASELINE declaration"
+    },
+    {
+      "id": "t2_rebaseline_accept",
+      "from": "REBASELINE_PENDING",
+      "to": "REBASELINE_ACCEPTED",
+      "entropy_cost": "low",
+      "guard": "governance_review_passed",
+      "description": "Governance approval - REBASELINE accepted in review"
+    },
+    {
+      "id": "t3_rebaseline_reject",
+      "from": "REBASELINE_PENDING",
+      "to": "PHASE_2_FROZEN",
+      "entropy_cost": "low",
+      "guard": "governance_review_failed",
+      "description": "Rebaseline rejected or no longer needed"
+    },
+    {
+      "id": "t4_enter_dual_phase",
+      "from": "REBASELINE_ACCEPTED",
+      "to": "PHASE_3_DUAL",
+      "entropy_cost": "high",
+      "guard": "dual_impl_ready",
+      "description": "ENTER_PHASE_3 declared in commit message"
+    },
+    {
+      "id": "t5_switch_over",
+      "from": "PHASE_3_DUAL",
+      "to": "PHASE_4_SWITCH",
+      "entropy_cost": "medium",
+      "guard": "validation_complete",
+      "description": "Dual implementation validated, switchover authorized"
+    },
+    {
+      "id": "t6_cycle_complete",
+      "from": "PHASE_4_SWITCH",
+      "to": "PHASE_2_FROZEN",
+      "entropy_cost": "low",
+      "guard": "migration_confirmed",
+      "description": "Switchover complete, identity frozen for next epoch"
+    },
+    {
+      "id": "t7_invalid",
+      "from": "*",
+      "to": "INVALID",
+      "entropy_cost": "high",
+      "guard": "state_compiler_failed",
+      "description": "State compiler failed to produce unique canonical state (|C(O)| != 1)"
+    }
+  ],
+  "guards": {
+    "change_targets_protected_surface": {
+      "type": "boolean",
+      "description": "Does the commit modify adr001_protected_paths.txt?"
+    },
+    "governance_review_passed": {
+      "type": "boolean",
+      "description": "Has governance review approved the transition?"
+    },
+    "governance_review_failed": {
+      "type": "boolean",
+      "description": "Has governance review rejected the transition?"
+    },
+    "dual_impl_ready": {
+      "type": "boolean",
+      "description": "Are dual implementations ready for parallel operation?"
+    },
+    "validation_complete": {
+      "type": "boolean",
+      "description": "Has validation of dual implementations completed?"
+    },
+    "migration_confirmed": {
+      "type": "boolean",
+      "description": "Has migration been confirmed successful?"
+    },
+    "state_compiler_failed": {
+      "type": "boolean",
+      "description": "Did compile-cegla-state.sh fail to produce unique canonical state?"
+    }
+  },
+  "invariants": [
+    {
+      "id": "I1",
+      "description": "pgv.phase must exist and be readable",
+      "scope": "global",
+      "enforcement": "check-adr001.sh Gate 3"
+    },
+    {
+      "id": "I2",
+      "description": "Canonical state uniqueness - |C(O)| = 1 (Axiom A3)",
+      "scope": "global",
+      "enforcement": "compile-cegla-state.sh"
+    },
+    {
+      "id": "I3",
+      "description": "Declared state must equal canonical state unless approved transition in progress",
+      "scope": "transition",
+      "enforcement": "check-cegla.sh"
+    },
+    {
+      "id": "I4",
+      "description": "pgv.phase must not be directly modified outside CEGL-approved transition",
+      "scope": "global",
+      "enforcement": "check-adr001.sh Gate 4A"
+    },
+    {
+      "id": "I5",
+      "description": "All commits within a transition must reference the transition or governance ADR",
+      "scope": "transition",
+      "enforcement": "check-cegla.sh"
+    }
+  ],
+  "entropy_scale": {
+    "low": 1,
+    "medium": 5,
+    "high": 10
+  }
+}

@@ -21,10 +21,15 @@ set -euo pipefail
 BASE_SHA="${1:-HEAD~1}"
 HEAD_SHA="${2:-HEAD}"
 LEDGER_FILE=".tools/transition_ledger.json"
+STATE_MACHINE_FILE=".tools/pgv.state_machine.json"
 
 # Ensure we're in the repo root
 if [[ ! -f "$LEDGER_FILE" ]]; then
   echo "CEGL-A: transition_ledger.json not found"
+  exit 2
+fi
+if [[ ! -f "$STATE_MACHINE_FILE" ]]; then
+  echo "CEGL-A: pgv.state_machine.json not found"
   exit 2
 fi
 
@@ -83,10 +88,10 @@ else
   echo "  Transition detected: $DECLARED_STATE → $CANONICAL_STATE"
   echo ""
 
-  # Look up transition in ledger
+  # Look up transition in state machine
   TRANSITION_FOUND=$(python3 -c "
 import json
-with open('$LEDGER_FILE') as f:
+with open('$STATE_MACHINE_FILE') as f:
     d = json.load(f)
 for t in d.get('transitions', []):
     if t['from'] == '$DECLARED_STATE' and t['to'] == '$CANONICAL_STATE':
@@ -107,7 +112,7 @@ else:
     echo "  Possible transitions from $DECLARED_STATE:"
     python3 -c "
 import json
-with open('$LEDGER_FILE') as f:
+with open('$STATE_MACHINE_FILE') as f:
     d = json.load(f)
 for t in d.get('transitions', []):
     if t['from'] == '$DECLARED_STATE':
@@ -151,7 +156,7 @@ if [[ "$INVARIANT_ALL_PASS" == "false" ]]; then
   echo ""
   echo "❌ Invariant violation detected"
   echo "    System state does not satisfy all invariants."
-  echo "    See: .tools/transition_ledger.json (invariants section)"
+  echo "    See: .tools/pgv.state_machine.json (invariants section)"
   exit 1
 fi
 echo ""

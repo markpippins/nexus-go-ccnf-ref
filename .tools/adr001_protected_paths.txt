@@ -13,3 +13,4 @@ tools/pgv/pgv_test.go
 runtime/identity/
 .tools/golden_identity.json
 .tools/transition_ledger.json
+.tools/pgv.state_machine.json

@@ -1,6 +1,12 @@
 {
   "schema_version": "cir-sdm.v1",
   "native_domains": {
-    "go/wrp/ccnf-ref/": ["CCNF", "CER", "CEGL", "ADR"]
+    "go/wrp/ccnf-ref/": [
+      "CCNF", "CER", "CEGL", "ADR",
+      "pgv.phase", "pgv.state_machine",
+      "PHASE_2_FROZEN", "REBASELINE_PENDING", "REBASELINE_ACCEPTED",
+      "PHASE_3_DUAL", "PHASE_4_SWITCH", "INVALID",
+      "I1", "I2", "I3", "I4", "I5"
+    ]
   }
 }

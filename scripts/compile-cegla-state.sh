@@ -31,6 +31,7 @@ HEAD_SHA="${2:-HEAD}"
 
 STATE_FILE="pgv.phase"
 LEDGER_FILE=".tools/transition_ledger.json"
+STATE_MACHINE_FILE=".tools/pgv.state_machine.json"
 PROTECTED_PATHS_FILE=".tools/adr001_protected_paths.txt"
 
 # --- Input validation ---
@@ -151,10 +152,10 @@ DECLARED_STATE="${PHASE_MAP[$DECLARED_PHASE]:-UNKNOWN}"
 if [[ "$CANONICAL_STATE" != "INVALID" && "$DECLARED_STATE" != "UNKNOWN" ]]; then
   if [[ "$DECLARED_STATE" != "$CANONICAL_STATE" ]]; then
     TRANSITION_DETECTED=true
-    # Extract transition cost from ledger
+    # Extract transition cost from state machine
     ENTROPY_COST=$(python3 -c "
 import json
-with open('$LEDGER_FILE') as f:
+with open('$STATE_MACHINE_FILE') as f:
     d = json.load(f)
 for t in d.get('transitions', []):
     if (t['from'] == '$DECLARED_STATE' and t['to'] == '$CANONICAL_STATE') or \
@@ -169,9 +170,14 @@ fi
 
 # Scale cost to numeric
 declare -A COST_SCALE
-COST_SCALE[low]=1
-COST_SCALE[medium]=5
-COST_SCALE[high]=10
+COST_SCALE=$(python3 -c "
+import json
+with open('$STATE_MACHINE_FILE') as f:
+    d = json.load(f)
+s = d.get('entropy_scale', {})
+print(f'low={s.get(\"low\", 1)} medium={s.get(\"medium\", 5)} high={s.get(\"high\", 10)}')
+" 2>/dev/null || echo "low=1 medium=5 high=10")
+eval "$COST_SCALE"
 ENTROPY_NUMERIC="${COST_SCALE[$ENTROPY_COST]:-0}"
 
 # --- Invariant health ---
