@@ -21,9 +21,10 @@ type Edge struct {
 }
 
 type Graph struct {
-	Nodes    []Node
-	Edges    []Edge
-	Metadata IRMetadata
+	Nodes             []Node
+	Edges             []Edge
+	Metadata          IRMetadata
+	ExtractorVersions map[string]string
 }
 
 type IRMetadata struct {

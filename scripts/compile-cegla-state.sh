@@ -141,11 +141,17 @@ elif [[ ${#UNIQUE_CANDIDATES[@]} -gt 1 ]]; then
   A3_SATISFIED=false
 fi
 
-# --- Declared state from phase number ---
+# --- Declared state from phase number (derived from state machine) ---
 declare -A PHASE_MAP
-PHASE_MAP[2]="PHASE_2_FROZEN"
-PHASE_MAP[3]="PHASE_3_DUAL"
-PHASE_MAP[4]="PHASE_4_SWITCH"
+eval "$(python3 -c "
+import json
+with open('$STATE_MACHINE_FILE') as f:
+    d = json.load(f)
+for name, state in d.get('states', {}).items():
+    pn = state.get('phase_number')
+    if pn is not None:
+        print(f'PHASE_MAP[{pn}]=\"{name}\"')
+" 2>/dev/null)"
 DECLARED_STATE="${PHASE_MAP[$DECLARED_PHASE]:-UNKNOWN}"
 
 # --- Transition detection ---

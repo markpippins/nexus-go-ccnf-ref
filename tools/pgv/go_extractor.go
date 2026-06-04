@@ -17,7 +17,8 @@ type rawPackage struct {
 
 type GoExtractor struct{}
 
-func (e *GoExtractor) Name() string { return "go" }
+func (e *GoExtractor) Name() string    { return "go" }
+func (e *GoExtractor) Version() string { return "go_extractor.v1" }
 
 func (e *GoExtractor) Extract() ([]Node, error) {
 	cmd := exec.Command("go", "list", "-json", "-e", "./projection/...")

@@ -5,6 +5,7 @@
   "states": {
     "PHASE_2_FROZEN": {
       "description": "IR identity frozen. Structural changes to protected surface prohibited without governance protocol.",
+      "phase_number": 2,
       "is_canonical": true
     },
     "REBASELINE_PENDING": {
@@ -17,10 +18,12 @@
     },
     "PHASE_3_DUAL": {
       "description": "Dual implementation active. Old and new implementations coexist.",
+      "phase_number": 3,
       "is_canonical": true
     },
     "PHASE_4_SWITCH": {
       "description": "Switchover in progress. New implementation replaces old.",
+      "phase_number": 4,
       "is_canonical": true
     },
     "INVALID": {

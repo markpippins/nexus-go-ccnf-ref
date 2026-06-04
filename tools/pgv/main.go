@@ -31,11 +31,93 @@ func ValidateAndDiff(g *Graph, cfg *Config) (*ValidationResult, IRDelta) {
 }
 
 func main() {
-	if len(os.Args) > 1 && os.Args[1] == "diff" {
-		runDiffCLI(os.Args[2:])
-		return
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "diff":
+			runDiffCLI(os.Args[2:])
+			return
+		case "extract":
+			runExtractCLI()
+			return
+		case "diff-files":
+			runDiffFilesCLI(os.Args[2:])
+			return
+		}
 	}
 	runValidate()
+}
+
+func runExtractCLI() {
+	g := extractGraph()
+	if g == nil {
+		return
+	}
+	data, err := SerializeGraph(g)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PGV: serialize error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Println(string(data))
+}
+
+func runDiffFilesCLI(args []string) {
+	machineMode := false
+	humanMode := false
+	rest := args
+	if len(rest) > 0 && rest[0] == "--machine" {
+		machineMode = true
+		rest = rest[1:]
+	} else if len(rest) > 0 && rest[0] == "--human" {
+		humanMode = true
+		rest = rest[1:]
+	}
+	if len(rest) < 2 {
+		fmt.Fprintf(os.Stderr, "PGV: usage: pgv diff-files [--machine|--human] <base-graph.json> <head-graph.json>\n")
+		os.Exit(2)
+	}
+	baseData, err := os.ReadFile(rest[0])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PGV: read base graph: %v\n", err)
+		os.Exit(1)
+	}
+	headData, err := os.ReadFile(rest[1])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PGV: read head graph: %v\n", err)
+		os.Exit(1)
+	}
+	baseGraph, err := DeserializeGraph(baseData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PGV: deserialize base graph: %v\n", err)
+		os.Exit(1)
+	}
+	headGraph, err := DeserializeGraph(headData)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "PGV: deserialize head graph: %v\n", err)
+		os.Exit(1)
+	}
+	delta := ComputeDiffPair(baseGraph, headGraph)
+	if machineMode {
+		machineOut := cliMachineOutput{
+			CLIVersion:         "pgv.cli.diff.machine.v1",
+			IRSchemaVersion:    IrSchemaVersion,
+			DeltaSchemaVersion: "pgv.ir.delta.v1",
+			Inputs: inputs{
+				Base: baseGraph.Metadata.Hash,
+				Head: headGraph.Metadata.Hash,
+			},
+			Result: delta,
+		}
+		data, err := json.Marshal(machineOut)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "PGV: marshal error: %v\n", err)
+			os.Exit(1)
+		}
+		fmt.Println(string(data))
+	} else if humanMode {
+		fmt.Print(FormatHuman(delta))
+	} else {
+		fmt.Print(FormatHuman(delta))
+	}
 }
 
 func runDiffCLI(args []string) {
@@ -98,6 +180,7 @@ func extractGraph() *Graph {
 	extractors := []Extractor{goExt, rustExt}
 
 	var allNodes []Node
+	extractorVersions := map[string]string{}
 	for _, ext := range extractors {
 		nodes, err := ext.Extract()
 		if err != nil {
@@ -105,6 +188,7 @@ func extractGraph() *Graph {
 			os.Exit(1)
 		}
 		allNodes = append(allNodes, nodes...)
+		extractorVersions[ext.Name()] = ext.Version()
 	}
 
 	if len(allNodes) == 0 {
@@ -112,7 +196,9 @@ func extractGraph() *Graph {
 		os.Exit(0)
 	}
 
-	return BuildGraph(allNodes)
+	g := BuildGraph(allNodes)
+	g.ExtractorVersions = extractorVersions
+	return g
 }
 
 func runValidate() {

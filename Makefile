@@ -436,6 +436,65 @@ pdtp-window-status:
 	  echo "  Clean"; \
 	fi
 
+ci-diff-extract:
+	@go run ./tools/pgv/ extract
+
+ci-diff-compare:
+	@go run ./tools/pgv/ diff-files --machine $(BASE_GRAPH) $(HEAD_GRAPH)
+
+ci-diff:
+	@echo "================================================"
+	@echo "  PGV: CI Diff Artifact"
+	@echo "================================================"
+	@echo ""
+	@BASE_REF="$(or $(BASE_SHA),origin/main)"; \
+	HEAD_REF="$(or $(HEAD_SHA),HEAD)"; \
+	ARTIFACT_DIR="$(or $(ARTIFACT_DIR),/tmp)"; \
+	WORKTREE_DIR="/tmp/pgv-worktree-$$$$"; \
+	CCNF_DIR="go/wrp/ccnf-ref"; \
+	cleanup() { rm -rf "$$WORKTREE_DIR" 2>/dev/null; }; \
+	trap cleanup EXIT; \
+	\
+	echo "  Base ref: $$BASE_REF"; \
+	echo "  Head ref: $$HEAD_REF"; \
+	echo "  Artifact dir: $$ARTIFACT_DIR"; \
+	echo ""; \
+	\
+	echo "--- Extracting head graph ---"; \
+	go run ./tools/pgv/ extract > "$$ARTIFACT_DIR/pgv-head-graph.json" 2>/dev/null; \
+	python3 -c "import json; d=json.load(open('$$ARTIFACT_DIR/pgv-head-graph.json')); print(f'  Head: {d[\"hash\"]} ({len(d[\"nodes\"])} nodes, {len(d[\"edges\"])} edges)')"; \
+	echo ""; \
+	\
+	echo "--- Extracting base graph ---"; \
+	(git diff --quiet "$$BASE_REF"..HEAD -- go/wrp/ccnf-ref 2>/dev/null) && \
+	  { echo "  SKIP: no changes in ccnf-ref between refs, using head as baseline"; \
+	    cp "$$ARTIFACT_DIR/pgv-head-graph.json" "$$ARTIFACT_DIR/pgv-base-graph.json"; } || \
+	{ \
+	  if git worktree add --detach "$$WORKTREE_DIR" "$$BASE_REF" > /dev/null 2>&1 && \
+	     (cd "$$WORKTREE_DIR" && git submodule update --init "$$CCNF_DIR" > /dev/null 2>&1) && \
+	     (cd "$$WORKTREE_DIR/$$CCNF_DIR" && go run ./tools/pgv/ extract) > "$$ARTIFACT_DIR/pgv-base-graph.json" 2>/dev/null && \
+	     [ -s "$$ARTIFACT_DIR/pgv-base-graph.json" ]; then \
+	    python3 -c "import json; d=json.load(open('$$ARTIFACT_DIR/pgv-base-graph.json')); print(f'  Base: {d[\"hash\"]} ({len(d[\"nodes\"])} nodes, {len(d[\"edges\"])} edges)')"; \
+	  else \
+	    echo "  SKIP: base graph unavailable (no common ancestor or submodule diff only)"; \
+	    cp "$$ARTIFACT_DIR/pgv-head-graph.json" "$$ARTIFACT_DIR/pgv-base-graph.json"; \
+	  fi; \
+	  rm -rf "$$WORKTREE_DIR" 2>/dev/null; \
+	}; \
+	echo ""; \
+	\
+	echo "--- Computing diff ---"; \
+	go run ./tools/pgv/ diff-files --machine \
+	  "$$ARTIFACT_DIR/pgv-base-graph.json" \
+	  "$$ARTIFACT_DIR/pgv-head-graph.json" \
+	  > "$$ARTIFACT_DIR/ir-delta.json" 2>/dev/null; \
+	python3 -c "import json; d=json.load(open('$$ARTIFACT_DIR/ir-delta.json')); \
+	  r=d['result']; s=r['summary']; \
+	  print(f'  Status: {r[\"status\"]}'); \
+	  print(f'  Added: {s[\"added_count\"]}  Removed: {s[\"removed_count\"]}  Moved: {s[\"moved_count\"]}  Unchanged: {s[\"unchanged_count\"]}')" 2>/dev/null; \
+	echo ""; \
+	echo "  CI diff artifact: $$ARTIFACT_DIR/ir-delta.json"
+
 dependency-visibility:
 	@echo "--- P10: Dependency visibility (advisory) ---"
 	@missing=0; \

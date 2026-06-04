@@ -19,7 +19,8 @@ type RustExtractor struct {
 	Config RustMappingConfig
 }
 
-func (e *RustExtractor) Name() string { return "rust" }
+func (e *RustExtractor) Name() string    { return "rust" }
+func (e *RustExtractor) Version() string { return "rust_extractor.v1" }
 
 func (e *RustExtractor) Extract() ([]Node, error) {
 	srcPath := e.Config.SrcPath

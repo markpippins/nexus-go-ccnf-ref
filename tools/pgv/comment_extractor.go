@@ -15,7 +15,8 @@ type DeclaredDeps struct {
 
 type CommentExtractor struct{}
 
-func (e *CommentExtractor) Name() string { return "comment" }
+func (e *CommentExtractor) Name() string    { return "comment" }
+func (e *CommentExtractor) Version() string { return "comment_extractor.v1" }
 
 func (e *CommentExtractor) Extract() ([]Node, error) {
 	return nil, nil

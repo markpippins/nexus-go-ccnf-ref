@@ -8,6 +8,46 @@ import (
 	"testing"
 )
 
+// TestExtractorVersions verifies all extractors implement Version().
+func TestExtractorVersions(t *testing.T) {
+	extractors := []Extractor{
+		&GoExtractor{},
+		&RustExtractor{Config: RustMappingConfig{
+			CrateRoot: "ccnf-verifier",
+			Namespace: "rust",
+			SrcPath:   "../../../rust/wrp/ccnf-verifier/src",
+		}},
+		&CommentExtractor{},
+	}
+	for _, ext := range extractors {
+		v := ext.Version()
+		if v == "" {
+			t.Errorf("extractor %s returned empty version", ext.Name())
+		}
+	}
+}
+
+// TestExtractorSmoke verifies each extractor runs without error.
+func TestExtractorSmoke(t *testing.T) {
+	goExt := &GoExtractor{}
+	rustExt := &RustExtractor{Config: RustMappingConfig{
+		CrateRoot: "ccnf-verifier",
+		Namespace: "rust",
+		SrcPath:   "../../../rust/wrp/ccnf-verifier/src",
+	}}
+
+	for _, ext := range []Extractor{goExt, rustExt} {
+		nodes, err := ext.Extract()
+		if err != nil {
+			t.Errorf("extractor %s failed: %v", ext.Name(), err)
+		}
+		// Non-nil nodes are valid, nil means no packages found (acceptable)
+		if nodes != nil && len(nodes) == 0 {
+			t.Errorf("extractor %s returned empty node list", ext.Name())
+		}
+	}
+}
+
 var goldenNodes = []Node{
 	{ImportPath: "auth/service", Name: "service", DirectDeps: []string{"auth/model", "shared/log"}},
 	{ImportPath: "auth/model", Name: "model", DirectDeps: []string{}},
