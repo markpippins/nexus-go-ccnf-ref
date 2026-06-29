@@ -146,6 +146,8 @@ func buildPayload(m map[string]any) map[string]any {
 
 	rawPayload := getMap(m, "payload")
 	if rawPayload != nil {
+		// Process payload.data: only valid artifact IDs survive as data keys.
+		// Keys that are not valid type:id references are preserved as-is.
 		if d, ok := rawPayload["data"]; ok {
 			switch dd := d.(type) {
 			case map[string]any:
@@ -156,6 +158,18 @@ func buildPayload(m map[string]any) map[string]any {
 					}
 				}
 				payload["data"] = filteredData
+			}
+		}
+
+		// Preserve all non-data, non-type keys as provenance metadata.
+		// This creates a stable namespace (payload.meta.*) for embedding
+		// execution context, WorkRequest DCOs, runtime info, etc. without
+		// overloading the artifact model. The CCNF pipeline treats these
+		// as opaque blobs — they are never resolved, delta'd, or hashed
+		// into the entity key.
+		for k, v := range rawPayload {
+			if k != "data" && k != "type" {
+				payload[k] = v
 			}
 		}
 	}

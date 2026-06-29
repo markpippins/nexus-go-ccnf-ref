@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -15,6 +16,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Usage: ccnf-conformance <command> [args]\n")
 		fmt.Fprintf(os.Stderr, "Commands:\n")
 		fmt.Fprintf(os.Stderr, "  run <vector-dir>   Run golden vector suite\n")
+		fmt.Fprintf(os.Stderr, "  process            Read CCNF input from stdin, write CER to stdout\n")
 		fmt.Fprintf(os.Stderr, "  verify <file>      Validate event file\n")
 		os.Exit(1)
 	}
@@ -34,6 +36,8 @@ func main() {
 			os.Exit(1)
 		}
 		canonicalFile(os.Args[2])
+	case "process":
+		processInput()
 	case "verify":
 		if len(os.Args) < 3 {
 			fmt.Fprintln(os.Stderr, "Usage: ccnf-conformance verify <file>")
@@ -297,4 +301,29 @@ func verifyFile(path string) {
 	fmt.Printf("  domain:      %s\n", cer.Domain)
 	fmt.Printf("  timestamp:   %d\n", cer.Timestamp)
 	fmt.Printf("  signature:   %s\n", cer.Signature["hash"])
+}
+
+func processInput() {
+	data, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read stdin: %v\n", err)
+		os.Exit(1)
+	}
+
+	if len(data) == 0 {
+		fmt.Fprintln(os.Stderr, "Empty input on stdin")
+		os.Exit(1)
+	}
+
+	cer, err := ccnf.Run(data, ccnf.CurrentCCNFVersion)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "CCNF error: %v\n", err)
+		os.Exit(1)
+	}
+	if cer == nil {
+		fmt.Fprintln(os.Stderr, "nil CER returned")
+		os.Exit(1)
+	}
+
+	os.Stdout.Write(ccnf.SerializeCER(cer))
 }
