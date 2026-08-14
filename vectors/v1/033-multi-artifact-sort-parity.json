@@ -1,0 +1,49 @@
+{
+  "ccnf_version": 1,
+  "description": "Multi-artifact canonical_hash must be deterministic: artifacts are resolved in lexicographic artifact_id order (compile.py _resolve_artifacts / Go ResolveArtifacts sort). Three artifacts listed out of order; canonical_hash is order-sensitive, so a randomized Go map iteration would produce a different hash.",
+  "expected": {
+    "canonical_hash": "531e2ebe8a1cd95912f8b073c1d241abf7781b3828af9ffcb77949af6f24576a",
+    "entity_key": "2af16f0445f7b06ae60bc2d19cddc048a62be099dc48fd2fb98c8ff9ab910329"
+  },
+  "input": {
+    "actor": {
+      "id": "multi-sort",
+      "session_id": "multi-sort",
+      "type": "system"
+    },
+    "causality": {
+      "causal_chain_id": "chain-multi-sort",
+      "ordered": true,
+      "parent_event_ids": [
+        "parent-001"
+      ],
+      "trace_depth": 2
+    },
+    "domain": "execution",
+    "event_id": "delta-multi-sort-001",
+    "intent": {
+      "action": "update",
+      "target_id": "graph:MULTI",
+      "target_type": "graph"
+    },
+    "payload": {
+      "data": {
+        "node:EX-030": {
+          "lifecycle_state": "RUNNING"
+        },
+        "graph:G-001": {
+          "active": true
+        },
+        "edge:EG-001": {
+          "active": true
+        }
+      }
+    },
+    "timestamp": 1713225600
+  },
+  "invariants_tested": [
+    "I2",
+    "I8"
+  ],
+  "name": "multi-artifact-sort-parity"
+}

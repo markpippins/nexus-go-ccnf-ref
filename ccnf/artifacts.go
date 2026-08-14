@@ -2,6 +2,7 @@ package ccnf
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -16,10 +17,21 @@ func ResolveArtifacts(m map[string]any) ([]string, []map[string]any, error) {
 		return refs, artifacts, nil
 	}
 
-	for k, v := range data {
+	// Sort keys lexicographically before iterating — Go map iteration order is
+	// randomized, which makes multi-artifact canonical hashes non-deterministic.
+	// This mirrors compile.py _resolve_artifacts (`for k in sorted(data.keys())`)
+	// so the Go reference and the Python compiler agree on canonical order (T21).
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
 		if !isValidArtifactID(k) {
 			return nil, nil, fmt.Errorf("%w: invalid artifact id %q", ErrArtifactResolution, k)
 		}
+		v := data[k]
 		refs = append(refs, k)
 
 		patch, ok := v.(map[string]any)

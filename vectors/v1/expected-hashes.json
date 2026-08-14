@@ -135,5 +135,9 @@
   },
   "032-ccnf-version-mismatch.json": {
     "error": "CCNF_VERSION_MISMATCH"
+  },
+  "033-multi-artifact-sort-parity.json": {
+    "entity_key": "2af16f0445f7b06ae60bc2d19cddc048a62be099dc48fd2fb98c8ff9ab910329",
+    "canonical_hash": "531e2ebe8a1cd95912f8b073c1d241abf7781b3828af9ffcb77949af6f24576a"
   }
 }
