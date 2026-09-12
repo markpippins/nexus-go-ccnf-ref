@@ -1,5 +1,11 @@
 SHELL = /bin/bash
 
+# R8 path overrides (CI sets these; local `make r8` uses the defaults,
+# which assume the nexus superproject layout: this Makefile at
+# <root>/go/wrp/ccnf-ref/Makefile with <root>/rust alongside).
+RUST_MANIFEST ?= ../../../rust/wrp/ccnf-verifier/Cargo.toml
+RUST_VECTORS ?= ../../../go/wrp/ccnf-ref/vectors/v1
+
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
         r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8 \
         r9 r9-rust r10 r10-rust replay-seal replay-import-check replay-build-isolation \
@@ -157,7 +163,7 @@ r8:
 	@echo "  R8: Rust verifier — independent CCNF pipeline"
 	@echo "==========================================="
 	@echo ""
-	@cargo run --release --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1
+	@cargo run --release --manifest-path $(RUST_MANIFEST) -- $(RUST_VECTORS)
 	@echo ""
 
 r9:

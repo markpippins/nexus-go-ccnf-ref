@@ -278,3 +278,31 @@ jobs:
           fi
           bash scripts/check-cegla.sh "$BASE_SHA"
         shell: bash
+
+  r8-rust-verifier:
+    name: "R8: Rust verifier — independent CCNF parity gate"
+    runs-on: ubuntu-latest
+    steps:
+      # PR code under test (Go golden vectors v1 come from here — frozen).
+      - uses: actions/checkout@v4
+      # Rust verifier source lives outside this repo (nexus main tree), so
+      # `make r8` cannot run on this checkout alone: its default sibling
+      # paths (../../../rust, ../../../go) don't exist here. Sparse-check
+      # out just the verifier crate from nexus@main and point make at it.
+      # Vectors stay on the PR side (frozen v1 by design); the verifier
+      # tracks main (strictest check — a verifier that outgrows v1 is itself
+      # a signal). No setup-go: r8 invokes cargo only; vectors are committed.
+      - name: Check out Rust verifier source (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R8 — Rust verifier against PR golden vectors
+        run: make r8
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+          RUST_VECTORS: ${{ github.workspace }}/vectors/v1
