@@ -172,7 +172,7 @@ r9:
 
 r9-rust:
 	@echo "--- R9: Rust runtime boundary ---"
-	cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::types runtime::trace 2>&1
+	cargo test --manifest-path $(RUST_MANIFEST) -- runtime::types runtime::trace 2>&1
 
 r10:
 	@echo "--- R10: Replay binding + sealed replay ---"
@@ -181,7 +181,7 @@ r10:
 
 r10-rust:
 	@echo "--- R10: Rust replay mirror ---"
-	cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::replay 2>&1
+	cargo test --manifest-path $(RUST_MANIFEST) -- runtime::replay 2>&1
 
 replay-seal:
 	@echo "--- Replay compile-time seal ---"

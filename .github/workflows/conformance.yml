@@ -306,3 +306,54 @@ jobs:
         env:
           RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
           RUST_VECTORS: ${{ github.workspace }}/vectors/v1
+
+  r9-rust-runtime:
+    name: "R9-rust: Rust runtime boundary tests (types + trace)"
+    runs-on: ubuntu-latest
+    steps:
+      # Rust runtime tests are PR-side-of-truth about the verifier crate, so
+      # unlike R8 the crate itself is sparse-checked from nexus@main; the
+      # Makefile only orchestrates (cargo test with a filter).
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R9-rust — runtime boundary (types + trace)
+        run: |
+          set -o pipefail
+          OUT=$(make r9-rust 2>&1)
+          echo "$OUT"
+          # Zero-test guard: a green suite with 0 tests is a vacuous pass —
+          # treat it as failure so silent test loss can never gate.
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+
+  r10-rust-replay:
+    name: "R10-rust: Rust replay mirror tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R10-rust — replay mirror
+        run: |
+          set -o pipefail
+          OUT=$(make r10-rust 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
