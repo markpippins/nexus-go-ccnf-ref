@@ -291,8 +291,8 @@ r10.3:
 
 r10.3-rust:
 	@echo "--- R10.3: Rust rehydration mirror ---"
-	@cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml 2>&1 | tail -3
-	@cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::rehydrate 2>&1 | tail -5
+	@cargo build --manifest-path $(RUST_MANIFEST) 2>&1 | tail -3
+	@cargo test --manifest-path $(RUST_MANIFEST) -- runtime::rehydrate 2>&1 | tail -5
 
 rust-rehydrate-no-mut:
 	@echo "--- Rust rehydrate &mut check ---"
