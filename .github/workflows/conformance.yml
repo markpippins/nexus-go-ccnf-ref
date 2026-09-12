@@ -278,3 +278,138 @@ jobs:
           fi
           bash scripts/check-cegla.sh "$BASE_SHA"
         shell: bash
+
+  r8-rust-verifier:
+    name: "R8: Rust verifier — independent CCNF parity gate"
+    runs-on: ubuntu-latest
+    steps:
+      # PR code under test (Go golden vectors v1 come from here — frozen).
+      - uses: actions/checkout@v4
+      # Rust verifier source lives outside this repo (nexus main tree), so
+      # `make r8` cannot run on this checkout alone: its default sibling
+      # paths (../../../rust, ../../../go) don't exist here. Sparse-check
+      # out just the verifier crate from nexus@main and point make at it.
+      # Vectors stay on the PR side (frozen v1 by design); the verifier
+      # tracks main (strictest check — a verifier that outgrows v1 is itself
+      # a signal). No setup-go: r8 invokes cargo only; vectors are committed.
+      - name: Check out Rust verifier source (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R8 — Rust verifier against PR golden vectors
+        run: make r8
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+          RUST_VECTORS: ${{ github.workspace }}/vectors/v1
+
+  r9-rust-runtime:
+    name: "R9-rust: Rust runtime boundary tests (types + trace)"
+    runs-on: ubuntu-latest
+    steps:
+      # Rust runtime tests are PR-side-of-truth about the verifier crate, so
+      # unlike R8 the crate itself is sparse-checked from nexus@main; the
+      # Makefile only orchestrates (cargo test with a filter).
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R9-rust — runtime boundary (types + trace)
+        run: |
+          set -o pipefail
+          OUT=$(make r9-rust 2>&1)
+          echo "$OUT"
+          # Zero-test guard: a green suite with 0 tests is a vacuous pass —
+          # treat it as failure so silent test loss can never gate.
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+
+  r10-rust-replay:
+    name: "R10-rust: Rust replay mirror tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R10-rust — replay mirror
+        run: |
+          set -o pipefail
+          OUT=$(make r10-rust 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+
+  r10-3-rust-rehydrate:
+    name: "R10.3-rust: Rust rehydration mirror tests"
+    runs-on: ubuntu-latest
+    steps:
+      # Rehydrate tests were merged to nexus@main (PR #217): 19 tests across
+      # the six rehydrate modules. Same guard discipline as R9/R10-rust —
+      # the summary must show N >= 1 passed, so a vacuous suite fails CI.
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      - name: R10.3-rust — rehydration mirror
+        run: |
+          set -o pipefail
+          OUT=$(make r10.3-rust 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+
+  r10-3b-rust-projection:
+    name: "R10.3B-rust: Rust projection layer (back-edge, no-mut, projection tests)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out Rust verifier crate (nexus@main, sparse)
+        uses: actions/checkout@v4
+        with:
+          repository: markpippins/nexus
+          ref: main
+          sparse-checkout: rust/wrp/ccnf-verifier
+          path: nexus-main
+      - uses: dtolnay/rust-toolchain@stable
+      # r10.3b-rust runs the structural gates (no non-snapshot rehydrate
+      # imports, no &mut in projection) + the projection test suite. The
+      # gates used to grep a hardcoded sibling path that does not exist on
+      # this checkout — they silently no-op'd (a second-order vacuous pass).
+      # They are now parameterized (RUST_SRC_DIR) and hard-fail when the
+      # dir is missing, so this job exercises them for real.
+      - name: R10.3B-rust — projection gates + tests
+        run: |
+          set -o pipefail
+          OUT=$(make r10.3b-rust 2>&1)
+          echo "$OUT"
+          echo "$OUT" | grep -E 'test result: ok\. [1-9][0-9]* passed'
+        shell: bash
+        env:
+          RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
+          RUST_SRC_DIR: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/src

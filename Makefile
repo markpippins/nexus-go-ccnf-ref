@@ -1,5 +1,14 @@
 SHELL = /bin/bash
 
+# R8 path overrides (CI sets these; local `make r8` uses the defaults,
+# which assume the nexus superproject layout: this Makefile at
+# <root>/go/wrp/ccnf-ref/Makefile with <root>/rust alongside).
+RUST_MANIFEST ?= ../../../rust/wrp/ccnf-verifier/Cargo.toml
+RUST_VECTORS ?= ../../../go/wrp/ccnf-ref/vectors/v1
+# Source dir for the projection gate greps (back-edge / no-mut). CI
+# overrides this; the default keeps local superproject behavior.
+RUST_SRC_DIR ?= ../../../rust/wrp/ccnf-verifier/src
+
 .PHONY: test conformance cross-platform fuzz oracle ci clean \
         r2 r2-collisions r2-stress r3 r3-roundtrip r4 r5 r6 r8 \
         r9 r9-rust r10 r10-rust replay-seal replay-import-check replay-build-isolation \
@@ -157,7 +166,7 @@ r8:
 	@echo "  R8: Rust verifier — independent CCNF pipeline"
 	@echo "==========================================="
 	@echo ""
-	@cargo run --release --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- ../../../go/wrp/ccnf-ref/vectors/v1
+	@cargo run --release --manifest-path $(RUST_MANIFEST) -- $(RUST_VECTORS)
 	@echo ""
 
 r9:
@@ -166,7 +175,7 @@ r9:
 
 r9-rust:
 	@echo "--- R9: Rust runtime boundary ---"
-	cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::types runtime::trace 2>&1
+	cargo test --manifest-path $(RUST_MANIFEST) -- runtime::types runtime::trace 2>&1
 
 r10:
 	@echo "--- R10: Replay binding + sealed replay ---"
@@ -175,7 +184,7 @@ r10:
 
 r10-rust:
 	@echo "--- R10: Rust replay mirror ---"
-	cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::replay 2>&1
+	cargo test --manifest-path $(RUST_MANIFEST) -- runtime::replay 2>&1
 
 replay-seal:
 	@echo "--- Replay compile-time seal ---"
@@ -282,8 +291,8 @@ r10.3:
 
 r10.3-rust:
 	@echo "--- R10.3: Rust rehydration mirror ---"
-	@cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml 2>&1 | tail -3
-	@cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- runtime::rehydrate 2>&1 | tail -5
+	@cargo build --manifest-path $(RUST_MANIFEST) 2>&1 | tail -3
+	@cargo test --manifest-path $(RUST_MANIFEST) -- runtime::rehydrate 2>&1 | tail -5
 
 rust-rehydrate-no-mut:
 	@echo "--- Rust rehydrate &mut check ---"
@@ -335,23 +344,28 @@ projection-build-isolation:
 
 rust-projection-no-rehydration-backedge:
 	@echo "--- Rust projection back-edge check ---"
-	@if grep -qR "runtime::rehydrate" ../../../rust/wrp/ccnf-verifier/src/projection/ 2>/dev/null; then \
-	  echo "  Checking Rust projection rehydrate imports..."; \
-	  if grep -qR "runtime::rehydrate" ../../../rust/wrp/ccnf-verifier/src/projection/ 2>/dev/null | grep -v "snapshot" | grep -q .; then \
-	    echo "  BANNED: Rust projection imports non-snapshot rehydrate"; \
-	    exit 1; \
-	  fi; \
-	fi; \
-	echo "  OK: Rust projection imports only snapshot"
+	@if [ ! -d "$(RUST_SRC_DIR)/projection" ]; then \
+	  echo "  MISSING: projection dir not found at $(RUST_SRC_DIR)/projection"; \
+	  exit 1; \
+	fi
+	@if grep -R "runtime::rehydrate" "$(RUST_SRC_DIR)/projection" 2>/dev/null | grep -v "snapshot" | grep -q .; then \
+	  echo "  BANNED: Rust projection imports non-snapshot rehydrate"; \
+	  exit 1; \
+	fi
+	@echo "  OK: Rust projection imports only snapshot"
 
 rust-projection-no-mut:
 	@echo "--- Rust projection &mut check ---"
-	@if grep -qR "&mut " ../../../rust/wrp/ccnf-verifier/src/projection/ 2>/dev/null; then \
-	  echo "  BANNED: &mut found in Rust projection"; \
-	  grep -R "&mut " ../../../rust/wrp/ccnf-verifier/src/projection/; \
+	@if [ ! -d "$(RUST_SRC_DIR)/projection" ]; then \
+	  echo "  MISSING: projection dir not found at $(RUST_SRC_DIR)/projection"; \
 	  exit 1; \
-	fi; \
-	echo "  OK: no &mut in Rust projection"
+	fi
+	@if grep -R "&mut " "$(RUST_SRC_DIR)/projection" 2>/dev/null | grep -q .; then \
+	  echo "  BANNED: &mut found in Rust projection"; \
+	  grep -R "&mut " "$(RUST_SRC_DIR)/projection"; \
+	  exit 1; \
+	fi
+	@echo "  OK: no &mut in Rust projection"
 
 r10.3b:
 	@echo "--- R10.3B: Projection layer ---"
@@ -364,10 +378,10 @@ r10.3b:
 
 r10.3b-rust:
 	@echo "--- R10.3B: Rust projection layer ---"
-	@cargo build --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml 2>&1 | tail -3
+	@cargo build --manifest-path $(RUST_MANIFEST) 2>&1 | tail -3
 	@$(MAKE) rust-projection-no-rehydration-backedge
 	@$(MAKE) rust-projection-no-mut
-	@cargo test --manifest-path ../../../rust/wrp/ccnf-verifier/Cargo.toml -- projection 2>&1 | tail -10
+	@cargo test --manifest-path $(RUST_MANIFEST) -- projection 2>&1 | tail -10
 
 ci: test conformance cross-platform fuzz r2 r3 r4 r5 r8 r9 r9-rust r10 r10-rust \
     replay-seal replay-import-check replay-build-isolation \
