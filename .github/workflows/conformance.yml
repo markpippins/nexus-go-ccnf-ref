@@ -358,14 +358,13 @@ jobs:
         env:
           RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
 
-  r10.3-rust-rehydrate:
+  r10-3-rust-rehydrate:
     name: "R10.3-rust: Rust rehydration mirror tests"
     runs-on: ubuntu-latest
     steps:
       # Rehydrate tests were merged to nexus@main (PR #217): 19 tests across
       # the six rehydrate modules. Same guard discipline as R9/R10-rust —
       # the summary must show N >= 1 passed, so a vacuous suite fails CI.
-      # Note the job id: r10.3-rust-rehydrate (dots are invalid in GH job ids).
       - uses: actions/checkout@v4
       - name: Check out Rust verifier crate (nexus@main, sparse)
         uses: actions/checkout@v4
@@ -385,7 +384,7 @@ jobs:
         env:
           RUST_MANIFEST: ${{ github.workspace }}/nexus-main/rust/wrp/ccnf-verifier/Cargo.toml
 
-  r10.3b-rust-projection:
+  r10-3b-rust-projection:
     name: "R10.3B-rust: Rust projection layer (back-edge, no-mut, projection tests)"
     runs-on: ubuntu-latest
     steps:
